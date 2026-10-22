@@ -55,6 +55,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--overthinking-threshold", type=int, default=3, help="hesitation markers allowed before the stream is cut (default %(default)s)")
     p.add_argument("--overthinking-window", type=int, default=500, help="sliding window, in tokens, over which markers are counted (default %(default)s)")
     p.add_argument("--no-section-repair", action="store_true", help="rewrite the whole answer instead of repairing only the failed sections")
+    p.add_argument(
+        "--thinking-reserve",
+        type=float,
+        default=0.25,
+        help="share of each role's output budget reserved for the answer, kept away from internal thinking (default %(default)s)",
+    )
     p.add_argument("--auto", action="store_true", help="auto-approve the human checkpoint (marked auto-approved)")
     p.add_argument("--force-original", action="store_true", help="force the original framing; runs in user-forced mode")
     p.add_argument(
@@ -92,6 +98,7 @@ def make_engine(args: argparse.Namespace) -> Engine:
         max_output_tokens=max_output,
         context_tokens=min(max(int(args.max_context), MIN_OUTPUT_TOKENS), MAX_CONTEXT_TOKENS),
         use_schema=not args.no_schema,
+        thinking_reserve=max(0.0, min(0.8, float(args.thinking_reserve))),
     )
     return Engine(
         client=client,

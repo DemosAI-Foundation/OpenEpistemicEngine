@@ -600,6 +600,8 @@ def build_overview(case: CaseFile) -> dict:
         "overthinking": (
             f"aborted: {over.get('reason', '')}; truncated at the last stable paragraph ({over.get('dropped_paragraphs', 0)} dropped)"
             if over.get("aborted")
+            else f"output cut at the token budget: {over.get('reason', '')}; the answer is a partial draft assembled from the ontology packet"
+            if over.get("truncated")
             else f"clear: {over.get('hesitation_markers', 0)} hesitation markers, {over.get('stance_flips', 0)} stance flips"
             if over
             else "not run"

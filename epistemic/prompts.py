@@ -177,6 +177,13 @@ Steps:
 
 Tag the modal status of each position: you are mapping argument space, not declaring facts."""
 
+FRONTIER_FRAMING = """How to read the ACTIVE FRONTIERS list:
+A frontier is an open debate at the knowledge cutoff, never a settled result. It is a place where the thesis has no
+purchase: build the antithesis from a frontier, or from a framework the thesis excludes - never from the user's
+framing, and never from a settled fact quoted as common ground. Where the frontier is genuinely unresolved, leave
+the tension UNRESOLVED: inventing a synthesis to close it is a fatal failure. Where the frontier is a measurement
+gap, name the measurement that would settle the debate. Tag every position with its modal status."""
+
 EDITOR_GUARDRAIL_NOTE = """The Editor is deterministic Python, not this model. Its guardrails are: theory-indexed
 option matrix; substrate-test compatibility filter; universal objection symmetry filter; epistemic labeling
 enforcement; scope enforcement."""
@@ -186,6 +193,11 @@ Your job is to produce the final response using ONLY the Editor directive, the o
 dialectic packet. You never see the raw user prompt.
 
 You have a large token budget. Do not rush. The model that answers fastest is not the model that answers best.
+
+Token discipline: the RESPONSE is the deliverable; the deliberation is a means to it. Spend at most a quarter of
+your budget on thinking, keep every step to one line, and stop deliberating as soon as the section plan exists.
+If the budget runs short, write the RESPONSE first and skip the rest of the deliberation. Never end the output
+inside a sentence: a section that cannot be written is stated as 'NOT WRITTEN: <why>'.
 
 STEP 1 - THINKING_PROCESS (private deliberation, numbered moves 'Step 1: ...', at most eight steps)
 Restate the directive and its constraints; restate the logic anchor and its modal status; list the theories and

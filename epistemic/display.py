@@ -78,13 +78,16 @@ def trace_panel(case: CaseFile) -> str:
     lines.append(f"WRITER DELIBERATION: {len(case.deliberation)} characters (kept out of the answer)")
     over = case.overthinking or {}
     if over:
+        state = "ABORTED" if over.get("aborted") else ("CUT AT TOKEN BUDGET" if over.get("truncated") else "clear")
         lines.append(
-            f"OVERThinking MONITOR: {'ABORTED' if over.get('aborted') else 'clear'}  "
+            f"OVERThinking MONITOR: {state}  "
             f"hesitation markers {over.get('hesitation_markers', 0)} (limit {over.get('limit', '-')})  "
             f"stance flips {over.get('stance_flips', 0)} (limit {over.get('flip_limit', '-')})"
         )
         if over.get("aborted"):
             lines.append("  " + str(over.get("reason", "")) + f"  truncated at the last stable paragraph ({over.get('dropped_paragraphs', 0)} dropped)")
+        if over.get("truncated"):
+            lines.append("  " + str(over.get("reason", "")) + "  the missing sections were assembled from the ontology packet")
     lines.append(
         f"WRITER NEGATIVE PROMPT: {bool(case.packets_meta.get('Writer', {}).get('negative_prompt', False))} "
         "(the user's biased wording is penalized at the API, never pasted into the prompt)"

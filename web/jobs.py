@@ -201,10 +201,22 @@ class Job:
             self.snapshot()
             self.publish({"type": "cancelled"})
         except LLMUnavailable as exc:
-            self.case.error = f"local LLM unavailable: {exc}"
+            text = str(exc)
+            offline = text.startswith("cannot reach LLM") or "no model served" in text
+            self.case.error = f"local LLM unavailable: {text}" if offline else text
             self.mark_failed()
             self.snapshot()
-            self.publish({"type": "error", "text": self.case.error, "kind": "llm-offline"})
+            self.publish(
+                {
+                    "type": "error",
+                    "text": self.case.error,
+                    "kind": "llm-offline" if offline else "role-failure",
+                    "hint": "The model ran out of output tokens before it finished answering. Raise Analysis depth, "
+                    "or set the thinking reserve so the answer keeps its share of the budget."
+                    if "token budget" in text
+                    else "",
+                }
+            )
         except Exception as exc:
             self.case.error = f"{type(exc).__name__}: {exc}"
             self.mark_failed()
@@ -273,6 +285,15 @@ class Job:
                 }
             )
         over = self.case.overthinking or {}
+        if over.get("truncated") and not over.get("aborted"):
+            self.publish(
+                {
+                    "type": "note",
+                    "text": "Token budget: " + str(over.get("reason", "the output was cut")) + ". "
+                    "The answer kept the text that was produced and finished the remaining sections from the ontology packet. "
+                    "Raise Analysis depth or the thinking reserve to get a fully deliberated answer.",
+                }
+            )
         if over.get("aborted"):
             self.publish(
                 {
@@ -380,6 +401,7 @@ class Manager:
             max_output_tokens=max_tokens,
             context_tokens=min(MAX_CONTEXT_TOKENS, int(settings.get("max_context") or MAX_CONTEXT_TOKENS)),
             use_schema=bool(settings.get("structured_output", True)),
+            thinking_reserve=float(settings.get("thinking_reserve", 0.25) or 0),
         )
         return Engine(
             client=client,
@@ -405,6 +427,7 @@ class Manager:
             "negative_prompt": "on" if settings.get("negative_prompt", True) else "off",
             "overthinking_monitor": "on" if settings.get("overthinking_monitor", True) else "off",
             "section_repair": "on" if settings.get("section_repair", True) else "off",
+            "thinking_reserve": f"{int(float(settings.get('thinking_reserve', 0.25) or 0) * 100)}% of each role's output budget is kept for the answer",
             "external_apis": "disabled (purely parametric: no retrieval, no live search)",
         }
 

@@ -279,14 +279,16 @@ def parse_step_verdicts(raw: str | list) -> list[dict]:
 parse_check_verdicts = parse_step_verdicts
 
 
-def validate_fields(data: dict, spec: list[FieldSpec]) -> dict | None:
+def validate_fields(data: dict, spec: list[FieldSpec], partial: bool = False) -> dict | None:
+    """Fill the packet. partial=True accepts a truncated packet: a field with some content is kept,
+    an empty required field becomes an empty default instead of failing the whole call."""
     if not isinstance(data, dict):
         return None
     out: dict = {}
     for f in spec:
         val = data.get(f.name)
         if val is None:
-            if not f.required:
+            if not f.required or partial:
                 out[f.name] = [] if f.kind in {"list", "steps"} else ""
                 continue
             return None
@@ -298,11 +300,13 @@ def validate_fields(data: dict, spec: list[FieldSpec]) -> dict | None:
             elif isinstance(val, list):
                 items = [str(p).strip() for p in val if str(p).strip()]
             else:
-                return None
+                if not partial:
+                    return None
+                items = []
             out[f.name] = [i.lstrip("-").strip() for i in items if i.lstrip("- ").upper() not in {"NONE", "N/A", ""}]
         else:
             out[f.name] = str(val).strip()
-    if not any(out[f.name] for f in spec if f.required):
+    if not partial and not any(out[f.name] for f in spec if f.required):
         return None
     return out
 

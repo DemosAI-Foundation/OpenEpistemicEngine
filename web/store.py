@@ -1,4 +1,4 @@
-"""Persistence for cases, settings, and the local retrieval corpus."""
+"""Persistence for cases, settings, and the local document library (reference only: the engine never reads it)."""
 
 from __future__ import annotations
 
@@ -41,6 +41,7 @@ DEFAULT_SETTINGS = {
     "show_pipeline_stepper": True,
     "max_tokens": 16384,
     "max_context": MAX_CONTEXT_TOKENS,
+    "thinking_reserve": 0.25,
 }
 
 CHECKPOINT_POLICIES = {"always", "assumptions", "never"}
@@ -79,6 +80,10 @@ def normalize_settings(data: dict) -> dict:
         data["overthinking_window"] = max(100, min(5000, int(data.get("overthinking_window", 500) or 500)))
     except (TypeError, ValueError):
         data["overthinking_window"] = 500
+    try:
+        data["thinking_reserve"] = max(0.0, min(0.8, float(data.get("thinking_reserve", 0.25) or 0)))
+    except (TypeError, ValueError):
+        data["thinking_reserve"] = 0.25
     return data
 
 

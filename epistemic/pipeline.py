@@ -17,7 +17,7 @@ from dataclasses import asdict, dataclass, field
 
 from . import checks, guardrails, prompts, rules, scrubber, schemas
 from .casefile import CaseFile, new_case_id
-from .llm import LLMClient, LLMUnavailable
+from .llm import LLMClient, LLMUnavailable, UnparseableOutput, parse_field_text
 from .monitor import (
     DEFAULT_THRESHOLD,
     DEFAULT_WINDOW_TOKENS,
@@ -63,6 +63,12 @@ STEP_LIMIT = 12
 
 DIALECTIC_SIMILARITY_CAP = 0.55
 MAX_SECTIONS_PER_REPAIR = 3
+
+TRUNCATION_WARNING = (
+    "Termination warning: the Writer stream was cut at the output token budget. The answer below is the text that was "
+    "produced, followed by the remaining sections assembled directly from the ontology packet and the Editor directive. "
+    "It is an incomplete draft: read it as a partial analysis, not as a finished answer."
+)
 
 
 class Cancelled(Exception):
@@ -1003,18 +1009,22 @@ class Engine:
             system += prompts.LOGIC_MAPPING_RULE + "\n\n"
         system += prompts.PROVENANCE_RULE + "\n\n"
         system += schemas.text_format_block(schemas.WRITER)
-        result = self._call(
-            case,
-            "Writer",
-            system,
-            prompts.user_block(body, schemas.WRITER, False),
-            schemas.WRITER,
-            ROLE_TOKENS["Writer"],
-            hooks,
-            on_delta=watcher.feed,
-            use_schema=False,
-            negative_prompt=(case.raw_prompt if self.use_negative_prompt else ""),
-        )
+        try:
+            result = self._call(
+                case,
+                "Writer",
+                system,
+                prompts.user_block(body, schemas.WRITER, False),
+                schemas.WRITER,
+                ROLE_TOKENS["Writer"],
+                hooks,
+                on_delta=watcher.feed,
+                use_schema=False,
+                negative_prompt=(case.raw_prompt if self.use_negative_prompt else ""),
+            )
+        except UnparseableOutput as exc:
+            stream.finish()
+            return self._writer_partial(case, exc.raw, stream, monitor, exc.reason or "the Writer output was cut")
         stream.finish()
         thinking = str(result.fields.get("THINKING_PROCESS") or "").strip() or stream.thinking_text
         if thinking and thinking.upper() != "NONE":
@@ -1024,6 +1034,10 @@ class Engine:
                 case.deliberation = thinking
         draft = "\n\n".join(result.fields["RESPONSE"])
         case.overthinking = monitor.report()
+        if result.fields.get("_partial"):
+            case.overthinking["truncated"] = True
+            case.overthinking["reason"] = "the output was cut at the token budget: the answer is partial"
+            case.termination_warnings = list(case.termination_warnings) + [TRUNCATION_WARNING]
         if monitor.aborted or result.aborted:
             draft, dropped = truncate_at_last_stable(draft)
             case.overthinking["dropped_paragraphs"] = dropped
@@ -1038,6 +1052,32 @@ class Engine:
         draft = ensure_warning(draft, case.termination_warnings)
         case.leak = leak_report(draft, case.raw_prompt)
         return draft
+
+    def _writer_partial(self, case: CaseFile, raw: str, stream: DeliberationStream, monitor: OverthinkingMonitor, reason: str) -> str:
+        """The Writer stream was cut (token budget, disconnect). Keep what was produced and finish
+        the contract from the ontology packet instead of failing the whole case."""
+        fields = parse_field_text(raw, schemas.WRITER, partial=True) if raw else None
+        draft = "\n\n".join(p for p in ((fields or {}).get("RESPONSE") or []) if p).strip()
+        if not draft:
+            draft = stream.final_text.strip()
+        thinking = str((fields or {}).get("THINKING_PROCESS") or "").strip() or stream.thinking_text
+        if thinking and thinking.upper() != "NONE":
+            if case.writer_draft:
+                case.deliberation_rewrite = thinking
+            else:
+                case.deliberation = thinking
+        case.overthinking = monitor.report()
+        case.overthinking["truncated"] = True
+        case.overthinking["reason"] = reason
+        case.termination_warnings = list(case.termination_warnings) + [TRUNCATION_WARNING]
+        assembled = "\n\n".join(part for part in (TRUNCATION_WARNING, draft, self._writer_salvage(case, reason)) if part)
+        if not case.writer_draft:
+            case.writer_draft = assembled
+        else:
+            case.writer_rewrite = assembled
+        assembled = self._scrub(case, assembled)
+        case.leak = leak_report(assembled, case.raw_prompt)
+        return assembled
 
     def _scrub(self, case: CaseFile, draft: str) -> str:
         report = scrubber.scrub(draft)

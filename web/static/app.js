@@ -416,7 +416,7 @@ function handleEvent(data) {
     banner.hidden = false;
     clear(banner);
     banner.append(
-      h("span", {}, "Analysis partially completed. The final answer may be incomplete. " + (data.text || "")),
+      h("span", {}, (data.kind === "role-failure" ? "One role did not finish. " : "Analysis partially completed. ") + "The final answer may be incomplete. " + (data.text || "") + (data.hint ? " " + data.hint : "")),
       h("button", { class: "ghost-btn", onclick: () => retryCase() }, "Retry step"),
       h("button", { class: "ghost-btn", onclick: () => { setTab("raw"); } }, "Show raw output"),
       h("button", { class: "ghost-btn", onclick: () => { banner.hidden = true; } }, "Continue with warning")
@@ -1132,6 +1132,13 @@ const SETTING_GROUPS = [
       { kind: "info", label: "Triage routes", render: () => (((state.health || {}).modules || {}).knowledge_boundary) || "on" },
       { kind: "toggle", key: "show_trace", label: "Show Trace Inspector by default" },
       { kind: "select", key: "analysis_depth", label: "Analysis depth", options: [["light", "Light"], ["standard", "Standard"], ["deep", "Deep"]] },
+      {
+        kind: "select",
+        key: "thinking_reserve",
+        label: "Thinking reserve: share of the output budget kept for the answer",
+        options: [["0", "None: the model may spend the whole budget thinking"], ["0.25", "25% (recommended)"], ["0.5", "50%"], ["0.7", "70%"]],
+      },
+      { kind: "info", label: "Output budget per role", render: () => `${state.settings.max_tokens || 16384} tokens` },
       { kind: "info", label: "Structured output enforcement", render: () => ((state.health || {}).modules || {}).structured_output || "on" },
       { kind: "info", label: "Deterministic editor", render: () => ((state.health || {}).modules || {}).deterministic_editor || "on" },
     ],
@@ -1186,7 +1193,7 @@ function renderSettings() {
         card.appendChild(h("div", { class: "setting-row" }, [h("span", {}, row.label), input]));
       }
       if (row.kind === "select") {
-        const select = h("select", { "aria-label": row.label }, row.options.map(([value, label]) => h("option", { value, selected: state.settings[row.key] === value }, label)));
+        const select = h("select", { "aria-label": row.label }, row.options.map(([value, label]) => h("option", { value, selected: String(state.settings[row.key]) === value }, label)));
         select.addEventListener("change", () => saveSettings({ [row.key]: select.value }));
         card.appendChild(h("div", { class: "setting-row" }, [h("span", {}, row.label), select]));
       }
