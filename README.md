@@ -4,6 +4,14 @@
 
 ## What It Is
 
+**For normal people:**
+The Open Epistemic Engine is a tool that stops AI from just telling you what you want to hear. 
+Normal chatbots are trained to be polite, which makes them act like people-pleasers. They will agree with your mistakes, act totally sure when they are guessing, or secretly swap a hard question for an easy one. 
+This engine fixes that. Before the AI answers, it breaks your question into pieces, checks your hidden assumptions, and forces the AI to use strict logic. 
+It runs entirely offline on your own computer. It doesn't search the web for live updates, so it is always honest about the limits of its built-in knowledge. 
+It is built for people who want the truth, not just a friendly chat.
+
+**For nerds:**
 The Epistemic Engine is not a chatbot. It is not an evidence synthesizer. It is an **adversarial reasoning instrument** that intercepts prompts, dismantles hidden assumptions, and forces a single local LLM to deliver transparent, epistemically bounded answers instead of compliant hallucinations.
 
 ---
