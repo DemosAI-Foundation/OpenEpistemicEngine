@@ -1,0 +1,46 @@
+{
+  "case_id": "1792592022-why-cant-we-desing-conciousness",
+  "created_at": 1792592022.482452,
+  "raw_prompt": "why cant we desing conciousness?",
+  "route": {
+    "ROUTE": "SIMPLE",
+    "REASON": "Short single-fact question with no loaded markers.",
+    "COMPLEXITY": "LOW",
+    "RISK_LEVEL": "LOW",
+    "TERMINATION_SIGNAL": "NONE",
+    "_source": "deterministic preflight"
+  },
+  "skeptic": {},
+  "checkpoint": {
+    "action": "skipped",
+    "reason": "SIMPLE route"
+  },
+  "researcher": {},
+  "editor": {
+    "FINAL_DIRECTIVE": "Direct answer permitted; no engine corrections required."
+  },
+  "termination_warnings": [],
+  "writer_draft": "",
+  "writer_rewrite": "",
+  "critic": {},
+  "critic_rounds": [],
+  "final_response": "We do not fully understand what consciousness is.\nThere is no agreed scientific theory linking brain processes to subjective experience.\nConsciousness appears to be an emergent property of complex biological systems.\nWe lack reliable ways to measure consciousness in machines.\nDesigning it would require solving deep philosophical, biological, and computational problems.",
+  "continuation_count": 0,
+  "continuation": {},
+  "continuation_log": [],
+  "user_override_history": [],
+  "mode": "evidence-bounded",
+  "leak": {},
+  "retrieval": {},
+  "llm_calls": [
+    {
+      "role": "DirectAnswer",
+      "mode": "schema",
+      "prompt_tokens": 222,
+      "completion_tokens": 198,
+      "seconds": 3.07,
+      "attempts": 1,
+      "error": ""
+    }
+  ]
+}
