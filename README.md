@@ -12,7 +12,7 @@ It runs entirely offline on your own computer. It doesn't search the web for liv
 It is built for people who want the truth, not just a friendly chat.
 
 **For nerds:**
-The Epistemic Engine is not a chatbot. It is not an evidence synthesizer. It is an **adversarial reasoning instrument** that intercepts prompts, dismantles hidden assumptions, and forces a single local LLM to deliver transparent, epistemically bounded answers instead of compliant hallucinations.
+The Open Epistemic Engine is not a chatbot. It is not an evidence synthesizer. It is an **adversarial reasoning instrument** that intercepts prompts, dismantles hidden assumptions, and forces a single local LLM to deliver transparent, epistemically bounded answers instead of compliant hallucinations.
 
 ---
 
