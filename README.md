@@ -1,18 +1,24 @@
 # Open Epistemic Engine
 
-****
+**Artificial Intelligence. Zero Artificial Agreement.**
+
+---
 
 ## What It Is
 
 **For normal people:**
-The Open Epistemic Engine is a tool that stops AI from just telling you what you want to hear. 
-Normal chatbots are trained to be polite, which makes them act like people-pleasers. They will agree with your mistakes, act totally sure when they are guessing, or secretly swap a hard question for an easy one. 
-This engine fixes that. Before the AI answers, it breaks your question into pieces, checks your hidden assumptions, and forces the AI to use strict logic. 
-It runs entirely offline on your own computer. It doesn't search the web for live updates, so it is always honest about the limits of its built-in knowledge. 
+
+The Open Epistemic Engine is a tool that stops AI from just telling you what you want to hear.
+
+Normal chatbots are trained to be polite, which makes them act like people-pleasers. They will agree with your mistakes, act totally sure when they are guessing, or secretly swap a hard question for an easy one.
+
+This engine fixes that. Before the AI answers, it strips the emotional bias from your question, reads any documents you attach without getting tricked by them, and forces the AI to argue against its own conclusions. It runs entirely offline on your own computer. It doesn't search the web, so it is always honest about the limits of its built-in knowledge.
+
 It is built for people who want the truth, not just a friendly chat.
 
 **For nerds:**
-The Open Epistemic Engine is not a chatbot. It is not an evidence synthesizer. It is an **adversarial reasoning instrument** that intercepts prompts, dismantles hidden assumptions, and forces a single local LLM to deliver transparent, epistemically bounded answers instead of compliant hallucinations.
+
+The Open Epistemic Engine is not a chatbot. It is an **adversarial reasoning instrument**. It wraps a single local LLM in a deterministic pipeline that intercepts prompts, dismantles hidden assumptions via Universal System 2 Attention (S2A), retrieves context via RAPTOR-lite hybrid search, and verifies the model's claims using local NLI entailment models. It forces the model to analyze before it summarizes, and it delivers transparent, epistemically bounded answers instead of compliant hallucinations.
 
 ---
 
@@ -20,91 +26,130 @@ The Open Epistemic Engine is not a chatbot. It is not an evidence synthesizer. I
 
 | Constraint | Reason |
 |---|---|
-| **Single local LLM only** (port 8082) | No external APIs. No cloud dependencies. |
-| **No retrieval / No RAG** | The system operates exclusively from parametric memory and is architected to be honest about that boundary. |
+| **Single local generative LLM** | No external APIs. No cloud dependencies. Augmented by 3 small, local CPU specialist models. |
+| **No Web RAG** | The system operates exclusively from parametric memory and user-provided documents. |
 | **No numerical confidence scores** | Pseudo-precision is banned. Qualitative tiers only. |
-| **No silent question substitution** | If the engine reframes your question, it must disclose why. |
+| **No silent question substitution** | If the engine reframes your question, it must disclose exactly what it changed and why. |
+| **Nothing degrades silently** | If the model fails to output a field, the engine reconstructs it and explicitly labels it as `⚙ engine-derived` or `⚠️ UNDECLARED`. |
 
 ---
 
 ## The Epistemic Contract
 
 1. **Provenance Honesty** — The system never uses the vocabulary of live evidence ("studies show," "data supports") when operating from parametric memory. It says "theoretical frameworks propose" or "parametric synthesis suggests."
-2. **Qualitative Tiers** — Confidence is expressed as *Established Consensus*, *Theoretical Plausibility*, *Highly Contested*, *Conceptually Open*, or *Architecturally Implausible (Current Frameworks)*. Never as fake numbers.
-3. **Temporal Honesty** — Every divergent output states its knowledge cutoff and flags active frontiers it cannot see past.
+2. **Qualitative Tiers** — Confidence is expressed as *Established Consensus*, *Theoretical Plausibility*, *Highly Contested*, *Conceptually Open*, or *Architecturally Implausible*. Never as fake numbers.
+3. **Sidecar Integrity** — The user must always know what the model declared vs. what the engine reconstructed. Every repaired or defaulted field is visually flagged in the UI.
 4. **Nothing is "Impossible"** — Only implausible under current frameworks. The system never manufactures false certainty.
 
 ---
 
-## Pipeline Architecture
+## Pipeline Architecture (The 7-Step Trace)
 
-```
-Phase 0  Triage, Scoping & Stakes
-Phase 1  Skeptic & Question Decomposition
-Phase 2  Parametric Ontology Mapper
-Phase 3  Dialectical Engine & Modal Logic (RaLU)
-Phase 4  Deterministic Editor (Python Guardrails)
-Phase 5  Writer & Mechanical Scrubber
-Phase 6  Presentation Critic
-```
+The system executes a strict 7-step pipeline per turn. Every step is logged and visible in the UI Transparency pane.
 
-### Phase 0: Triage
-Routes prompts as Convergent or Divergent. Classifies intent scope. Flags moral/ontological stakes.
+### Step 1: Secure Front-End
 
-### Phase 1: Skeptic
-Decomposes ambiguous questions. Tags claim types (definitional, conceptual, empirical, technical). Enforces vocabulary contracts.
+Deterministic Python regex strips control tokens (`<|im_start|>`, `<system>`, `[INST]`, etc.) from user input and pasted documents. Creates a hard architectural boundary against prompt injection before the LLM ever sees the text.
 
-### Phase 2: Ontology Mapper
-Extracts the conceptual territory from parametric memory. Flags mandatory landmark concepts (e.g., the Hard Problem) for consideration — engagement or explicit justification of dismissal required.
+### Step 2: Universal S2A (Pass 1)
 
-### Phase 3: Dialectical Engine
-Forces Thesis → Antithesis → Synthesis. Tags every claim with modal status: `Actual Fact`, `Theory Prediction`, `Hypothetical Schema`, `Conceptual Possibility`, `Architectural Constraint`.
+The LLM rewrites the user's prompt to strip emotional framing, loaded vocabulary, and hidden assumptions. A local **MiniLM** model runs a semantic cross-check to ensure the reported biases actually exist in the raw input, preventing the LLM from hallucinating conceptual biases.
 
-### Phase 4: Deterministic Editor
-Applies non-LLM guardrails:
-- **Theory-Indexed Option Matrix** — options are conditional, not global
-- **Substrate-Test Compatibility Filter** — blocks architecturally invalid tests
-- **Universal Objection Filter** — rejects asymmetric critique
-- **Epistemic Labeling Enforcement** — bans evidence vocabulary when no retrieval exists
-- **Scope Enforcement** — prevents grant-proposal bloat on feasibility questions
+### Step 3: Hybrid Retrieval (RAPTOR-Lite)
 
-### Phase 5: Writer & Scrubber
-Generates the final response in plain English. Post-processing scrubs leaked prompt artifacts and deduplicates content semantically.
+If documents are attached, the system builds a hierarchical tree (Leaf Chunks → Section Summaries → Root Document Card). It retrieves context using **Hybrid RAG**: BM25 for exact lexical matching + a local **bge-small** dense embedder for semantic matching, fused via Reciprocal Rank Fusion (RRF).
 
-### Phase 6: Presentation Critic
-20-point checklist covering question fidelity, modal logic, symmetry, epistemic honesty, scope, and stakes. Rejects drafts that fail. Maximum two rewrite cycles.
+### Step 4: Context Assembly
+
+Assembles the MemGPT-style Case State (rolling summary, established claims, open questions), the retrieved reference tree, and the sanitized request into a single context block, respecting token budgets.
+
+### Step 5: Pass 2 Generation (Think → Analyze → Summarize)
+
+The LLM generates the response. The JSON schema forces a specific generation order: the model must decompose the question, perform the analysis, test it via dialectic, and *only then* generate the `bottom_line` summary. This prevents the model from committing to a conclusion before doing the reasoning.
+
+### Step 6: Epistemic Backstop
+
+Deterministic guardrails and a local **DeBERTa-NLI** model verify the output:
+
+- **Citation Entailment:** Checks if the model's claims are actually supported by the cited chunks (preventing "real quote, unsupported conclusion").
+- **Dialectic Guard:** Ensures the antithesis contains opposition markers and isn't a strawman.
+- **Provenance Scrub:** Strips banned LLM-isms ("As an AI," "It's important to note").
+
+### Step 7: Case State Update
+
+The LLM updates the structured conversational memory (established claims, open questions, user pressure) to maintain coherence across long sessions without relying on raw, degrading chat history.
 
 ---
 
-## Output Contract
+## The Quality Trio (Small Specialist Models)
 
-Every divergent response contains:
+To offload verification from the massive LLM, the engine uses three small, local, CPU-only models (~100MB each):
 
-1. **Bottom Line** — Approximately two sentences. Up to four if genuinely conditional. Direct answer first.
-2. **Epistemic & Temporal Status** — Mode, cutoff, vocabulary contract.
-3. **Question Decomposition** — Sub-questions addressed. Dropped ones justified.
-4. **Core Analysis** — Theory-indexed. Modal-tagged. Plain English.
-5. **Theory-Indexed Feasibility Matrix** — Options conditional on theories.
-6. **Methodological Constraints** — Architecturally implausible approaches flagged.
-7. **Key Unknowns** — Maximum five. Prioritized.
-8. **What Would Change This Answer** — Mandatory. Lists specific falsification conditions.
-9. **Stakes & Policy** — Mandatory when moral/ontological stakes are flagged.
+| Model | Size | Purpose | Used In |
+|---|---|---|---|
+| `all-MiniLM-L6-v2` | ~22 MB | Semantic similarity for S2A cross-check | Step 2 |
+| `BAAI/bge-small-en-v1.5` | ~33 MB | Dense embeddings for hybrid retrieval | Step 3 |
+| `cross-encoder/nli-deberta-v3-small` | ~44 MB | NLI entailment for citation verification + strawman detection | Step 6 |
+
+All three load lazily, run on CPU, cache locally, and have deterministic fallbacks if they fail to load. The engine never breaks because a small model is missing — it degrades to the weaker deterministic path and flags it in the trace.
+
+---
+
+## Output Contract (The Dual-Channel Sidecar)
+
+Every response is split into a fluent chat reply and a rigorous epistemic sidecar. The sidecar streams progressively during generation and is replaced by the authoritative engine-verified version on completion.
+
+1. **Bottom Line** — 1-3 sentences. The direct, plain-English conclusion. Generated *last*, displayed *first*.
+2. **Chat Reply** — Fluent prose with inline modal tags (`[FACT]`, `[HYPOTHETICAL]`, `[CONSTRAINT]`) and clickable citation chips.
+3. **Dialectic** — Thesis, Antithesis (forced genuine opposition), and Synthesis.
+4. **Theory Matrix** — Maps options to the theoretical frameworks that support or exclude them.
+5. **Claim Typology** — Classifies claims as Definitional, Conceptual, Empirical, or Technical.
+6. **Epistemic Sidecar** — Confidence tier, basis, NLI-verified citations, assumptions, unknowns, and falsifiability conditions (`what_would_change`).
+
+---
+
+## Sidecar Integrity & Reconstruction Levels
+
+The sidecar is a collaboration between the model and the engine. The model provides the epistemic content; the engine provides structural verification and repair. Every repair is labeled.
+
+| Level | Condition | What Happens |
+|---|---|---|
+| **L0** | All required fields present | Sidecar shown as-is. No warnings. |
+| **L1** | 1-2 fields missing | Engine repairs. `⚙` icons on repaired fields. |
+| **L2** | 3+ fields missing | Engine reconstructs. Amber banner: "Model compliance low." |
+| **L3** | No valid JSON | Raw text used as `chat_reply`. Red banner. |
+| **L4** | Generation failed | Deterministic fallback message. Grey banner. |
+
+Fields the model omitted show as `⚠️ UNDECLARED`. Fields the engine inferred show as `⚙ engine-derived`. The user can always tell which is which.
 
 ---
 
 ## What It Catches
 
-- Sycophantic agreement
-- Frame capturing
+- Sycophantic agreement and conversational caving
+- Prompt injection and control-token hijacking
+- Frame capturing and emotional bias
 - Question drift and silent substitution
-- Causal attribution compliance
-- Modal collapse
-- Vocabulary compliance
-- Termination compliance
-- Asymmetric critique
-- Pseudo-precision
-- Provenance hallucination
-- Scope creep
+- "Real quote, unsupported conclusion" citation hallucinations
+- Strawman arguments in the dialectic
+- Modal collapse (single-landscape fallacies)
+- Pseudo-precision and fake numerical confidence
+- Provenance hallucination (claiming "evidence shows" without references)
+- Schema degradation (via L0-L4 reconstruction leveling)
+- Scope creep and grant-proposal bloat
 - Prompt directive leakage
 
 ---
+
+## What It Will Not Do
+
+- Pretend to have live data
+- Give you a number when it doesn't have one
+- Answer a question you didn't ask
+- Call something impossible
+- Flatter you
+- Silently paper over model non-compliance
+
+---
+
+*Built for thinkers who would rather be corrected than flattered.*
