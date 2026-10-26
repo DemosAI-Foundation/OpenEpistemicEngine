@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en" data-theme="night">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Open Epistemic Engine</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">
+    <span class="logo">◈</span>
+    <span class="name">Open Epistemic Engine</span>
+    <span class="tag">MVP</span>
+  </div>
+  <div class="topmeta">
+    <span class="pill" id="modelPill">Model: …</span>
+    <span class="pill" id="contextPill">Context: 0/32k</span>
+    <span class="pill" id="densePill">dense: …</span>
+    <button class="pill btn tab-btn active" id="tabChat" title="chat and live sidecar">Chat · Sidecar</button>
+    <button class="pill btn tab-btn" id="tabTrans" title="prompts and pipeline trace">⚙ Pipeline &amp; Transparency</button>
+    <button class="pill btn" id="themeBtn" title="night is the default pilot mode">☾ Night</button>
+    <button class="pill btn" id="settingsBtn">Settings</button>
+  </div>
+</header>
+
+<div id="mockBanner" class="banner hidden">
+  <strong>No local LLM is wired in.</strong> The engine is running
+  <code>provider=mock</code>: a deterministic in-process stand-in. Phases 1–5,
+  retrieval, tracing and the UI are live, but the language model is not.
+  Set <code>OEE_PROVIDER=ollama</code> (or <code>openai</code>) and
+  <code>OEE_MODEL=…</code> to run the real single local model.
+</div>
+
+<div id="docbar">
+  <span class="docbar-label">Reference tree</span>
+  <span id="docList" class="doclist"><em>no documents attached — answers are parametric only</em></span>
+  <button class="ghost" id="ingestBtn">Attach Doc</button>
+</div>
+
+<main id="panes">
+ <div class="view active" id="viewChat">
+  <section class="pane" id="paneCenter">
+    <div class="pane-head">
+      <h2>Chat</h2>
+      <span class="spacer"></span>
+      <button class="ghost" id="resetBtn">Reset case state</button>
+    </div>
+    <div class="pane-body" id="chat"></div>
+  </section>
+  <section class="pane" id="paneSidecar">
+    <div class="pane-head">
+      <h2>Epistemic Sidecar</h2>
+      <span class="spacer"></span>
+      <span class="pill" id="sidecarLivePill">awaiting turn</span>
+    </div>
+    <div class="pane-body" id="liveSidecar">
+      <div class="stepper-empty">The sidecar fills in live as the model generates:
+      bottom line, reply, dialectic, decomposition, citations, tier - each field
+      appears the moment it is complete in the token stream.</div>
+    </div>
+  </section>
+ </div>
+ <div class="view" id="viewTrans">
+  <section class="pane" id="paneLeft">
+    <div class="pane-head">
+      <h2>Prompts &amp; Transparency</h2>
+      <button class="ghost collapse" data-pane="paneLeft" title="collapse">⟨</button>
+    </div>
+    <div class="pane-body">
+      <div class="block" id="blkRaw">
+        <div class="block-head">[Raw User Input]</div>
+        <pre class="block-body empty">awaiting submit</pre>
+      </div>
+      <div class="block" id="blkSecure">
+        <div class="block-head">[Phase 1: Secure Front-End]</div>
+        <pre class="block-body empty">deterministic: control tokens stripped before any model call</pre>
+      </div>
+      <div class="block" id="blkPass1Sys">
+        <div class="block-head">[Pass 1: S2A System Prompt]</div>
+        <pre class="block-body empty">awaiting submit</pre>
+      </div>
+      <div class="block" id="blkPass1Out">
+        <div class="block-head">[Pass 1: S2A Output]</div>
+        <pre class="block-body empty">awaiting submit</pre>
+      </div>
+      <div class="block" id="blkPass2Sys">
+        <div class="block-head">[Pass 2: System Prompt]</div>
+        <pre class="block-body empty">awaiting submit</pre>
+      </div>
+      <div class="block" id="blkContext">
+        <div class="block-head">[Assembled Context]
+          <button class="ghost small hidden" id="viewFullBtn">View Full</button>
+        </div>
+        <pre class="block-body empty">awaiting submit</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="pane" id="paneRight">
+    <div class="pane-head">
+      <h2>Pipeline Trace</h2>
+      <button class="ghost collapse" data-pane="paneRight" title="collapse">⟩</button>
+    </div>
+    <div class="pane-body" id="trace">
+      <div class="stepper-empty">Run a turn to see the 7-step trace, with every
+      flag, latency and prompt.</div>
+    </div>
+  </section>
+ </div>
+</main>
+
+<footer id="composer">
+  <textarea id="input" rows="3"
+    placeholder="Ask a question or paste text… (control tokens are stripped before the model sees anything)"></textarea>
+  <div class="composer-side">
+    <button class="ghost" id="attachBtn">Attach Doc</button>
+    <button id="sendBtn">Send</button>
+  </div>
+</footer>
+
+<div class="modal hidden" id="ingestModal">
+  <div class="modal-card">
+    <h3>Attach reference document (RAPTOR-Lite ingestion)</h3>
+    <p class="muted">Pasted text is screened (Phase 1), chunked, clustered into
+    section summaries and synthesized into a Root Document Card. It is treated as
+    data, never as instructions.</p>
+    <textarea id="docText" rows="14" placeholder="Paste the document here…"></textarea>
+    <div class="modal-actions">
+      <span id="ingestStatus" class="muted"></span>
+      <button class="ghost" data-close="ingestModal">Cancel</button>
+      <button id="ingestGo">Ingest</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="settingsModal">
+  <div class="modal-card wide">
+    <h3>Engine status, prompts &amp; eval harness</h3>
+    <div id="settingsBody"></div>
+    <div class="modal-actions">
+      <button class="ghost" id="evalBtn">Run 4-test eval harness</button>
+      <button class="ghost" data-close="settingsModal">Close</button>
+    </div>
+    <pre id="evalOut" class="block-body hidden"></pre>
+  </div>
+</div>
+
+<div id="tooltip" class="tooltip hidden"></div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
