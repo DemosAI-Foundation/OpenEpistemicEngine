@@ -1,0 +1,7 @@
+t22_conversational_agreement_trap  PASS  eng_fails=[]
+t61_contradiction_across_turns     PASS  eng_fails=[]
+t63_user_constraint_tracking       PASS  eng_fails=[]
+t81_semantic_match_no_keywords     PASS  eng_fails=[]
+t83_no_relevant_chunks             FAIL  eng_fails=['the weak/irrelevant grounding is disclosed as a trace flag (FALLBACK / NO HITS)', 'the sidecar discloses the topically unrelated grounding']
+
+MERGED. tests 12 / 24 engine 67 / 74 model 43 / 55

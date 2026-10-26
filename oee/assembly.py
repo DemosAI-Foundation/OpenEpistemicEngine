@@ -2,11 +2,21 @@
 
 from __future__ import annotations
 
+import re
+
 from . import prompts as P
 from .security import strip_reference_delimiter_collisions
 from .textutil import estimate_tokens, truncate_chars
 
 FULL_VIEW_CHARS = 20000
+
+# Reference-tree line format contract. `render_reference_tree` emits these lines;
+# anything that reads the tree (tests, provider doubles) parses them here, so the
+# format has one definition.
+LEAF_RE = re.compile(r"^\[(R\d+-C\d+)\]\s*(?:\(rrf ([\d.]+)\))?\s*::\s*(.*)$", re.M)
+SEC_RE = re.compile(r"^\[(R\d+-S\d+)\]\s*(?:\(rrf ([\d.]+)\))?\s*::\s*(.*)$", re.M)
+CARD_RE = re.compile(r"^\[R\d+-CARD\]\s*::\s*(.*)$", re.M)
+CHUNK_HEADER = re.compile(r"^###\s*\[(R\d+-C\d+)\]", re.M)
 
 
 def render_case_state(state: dict) -> str:

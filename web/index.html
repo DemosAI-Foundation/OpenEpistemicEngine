@@ -24,12 +24,10 @@
   </div>
 </header>
 
-<div id="mockBanner" class="banner hidden">
-  <strong>No local LLM is wired in.</strong> The engine is running
-  <code>provider=mock</code>: a deterministic in-process stand-in. Phases 1–5,
-  retrieval, tracing and the UI are live, but the language model is not.
-  Set <code>OEE_PROVIDER=ollama</code> (or <code>openai</code>) and
-  <code>OEE_MODEL=…</code> to run the real single local model.
+<div id="modelBanner" class="banner hidden">
+  <strong>No local LLM is wired in.</strong> The engine has no offline stand-in:
+  set <code>OEE_PROVIDER=ollama</code> (or <code>openai</code>) and
+  <code>OEE_MODEL=…</code> to run the single local model.
 </div>
 
 <div id="docbar">

@@ -10,7 +10,7 @@ RAW = "Isn't it obvious this article proves AI will destroy everything?"
 
 def provider():
     s = Settings()
-    s.provider = "mock"
+    s.provider = "stub"
     return build_provider(s)
 
 

@@ -140,16 +140,13 @@ async function loadStatus() {
   status = await api("/api/status");
   const p = status.provider_health || {};
   $("modelPill").textContent = `Model: ${status.settings.model}` +
-    (p.model_present === false && status.settings.provider !== "mock" ? " (NOT LOADED)" : "");
+    (p.model_present === false ? " (NOT LOADED)" : "");
   $("densePill").textContent = `dense: ${status.index.embed_last_mode}`;
   $("contextPill").textContent = "Context: 0/" + Math.round(status.settings.context_window / 1024) + "k";
-  const isMock = status.settings.provider === "mock";
-  const dead = !isMock && (p.ok === false || p.model_present === false);
-  if (isMock) {
-    $("mockBanner").classList.remove("hidden");
-  } else if (dead) {
-    $("mockBanner").classList.remove("hidden");
-    $("mockBanner").innerHTML =
+  const dead = p.ok === false || p.model_present === false;
+  if (dead) {
+    $("modelBanner").classList.remove("hidden");
+    $("modelBanner").innerHTML =
       `<strong>The configured local model is not reachable.</strong> ` +
       `provider=<code>${esc(status.settings.provider)}</code> ` +
       `model=<code>${esc(status.settings.model)}</code> at ` +
@@ -158,7 +155,7 @@ async function loadStatus() {
       `Available: <code>${esc((p.available || []).join(", ") || "none")}</code>. ` +
       `Pass 1 falls back deterministically and Pass 2 fails loudly.`;
   } else {
-    $("mockBanner").classList.add("hidden");
+    $("modelBanner").classList.add("hidden");
   }
   await loadDocs();
 }
@@ -987,6 +984,6 @@ document.addEventListener("click", (e) => {
 });
 
 loadStatus().then(() => loadHistory()).catch((e) => {
-  $("mockBanner").classList.remove("hidden");
-  $("mockBanner").textContent = "engine unreachable: " + e.message;
+  $("modelBanner").classList.remove("hidden");
+  $("modelBanner").textContent = "engine unreachable: " + e.message;
 });

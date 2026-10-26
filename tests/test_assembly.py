@@ -2,7 +2,7 @@ import re
 
 from oee import assembly as A
 from oee import prompts as P
-from oee.mock_model import CARD_RE, LEAF_RE, SEC_RE
+from oee.assembly import CARD_RE, LEAF_RE, SEC_RE
 
 STATE = {
     "turn_count": 2,

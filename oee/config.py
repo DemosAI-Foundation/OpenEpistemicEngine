@@ -2,7 +2,9 @@
 
 If OEE_PROVIDER is unset the endpoint is auto-detected by probing local
 servers (OpenAI-compatible first, then Ollama). Nothing is ever resolved
-remotely: only loopback/local addresses on the machine are probed.
+remotely: only loopback/local addresses on the machine are probed. If nothing
+answers, configuration fails: the engine has no offline stand-in and refuses
+to run without a real model.
 """
 
 from __future__ import annotations
@@ -13,12 +15,16 @@ import requests
 from dataclasses import dataclass, asdict
 
 
-PROVIDERS = ("ollama", "openai", "mock")
+PROVIDERS = ("ollama", "openai")
 PROBE_OPENAI = os.getenv("OEE_PROBE_OPENAI", "http://127.0.0.1:8082")
 PROBE_OLLAMA = os.getenv("OEE_PROBE_OLLAMA", "http://127.0.0.1:11434")
 
 _PROBE_CACHE: tuple | None = None
 _UNSET = ""
+
+
+class ProviderConfigError(RuntimeError):
+    """No single local LLM is configured: the engine refuses to run without one."""
 
 
 def probe_endpoints(openai_url: str = PROBE_OPENAI, ollama_url: str = PROBE_OLLAMA,
@@ -55,8 +61,16 @@ def probe_endpoints(openai_url: str = PROBE_OPENAI, ollama_url: str = PROBE_OLLA
     return None
 
 
+def known_providers() -> tuple[str, ...]:
+    """Providers the provider layer can build, including test doubles registered
+    by the test suite (tests never reach a real endpoint)."""
+    from .llm import PROVIDER_REGISTRY
+
+    return tuple(PROVIDER_REGISTRY)
+
+
 def autoconfigure(settings: "Settings") -> "Settings":
-    if settings.provider in PROVIDERS:
+    if settings.provider:
         settings.wiring = f"explicit provider={settings.provider}"
         return settings
     found = probe_endpoints(settings.probe_openai, settings.probe_ollama)
@@ -71,9 +85,13 @@ def autoconfigure(settings: "Settings") -> "Settings":
         settings.wiring = (f"auto-detected {provider} at {base}; model {settings.model}; "
                            f"models offered: {', '.join(ids)}")
     else:
-        settings.provider = "mock"
-        settings.wiring = (f"no local LLM answered on {settings.probe_openai} or "
-                           f"{settings.probe_ollama}; using the deterministic mock stand-in")
+        raise ProviderConfigError(
+            "no single local LLM is configured: nothing answered on "
+            f"{settings.probe_openai} (OpenAI-compatible) or {settings.probe_ollama} "
+            "(Ollama). Set OEE_PROVIDER=ollama|openai with OEE_BASE_URL/OEE_MODEL, "
+            "or start a local server. The engine has no offline stand-in and will "
+            "not run without a model."
+        )
     return settings
 
 
@@ -114,13 +132,9 @@ class Settings:
 
     def validate(self) -> list[str]:
         problems: list[str] = []
-        if self.provider not in PROVIDERS:
-            problems.append(f"provider must be one of {PROVIDERS}, got {self.provider!r}")
-        if self.provider == "mock":
-            problems.append(
-                "provider='mock' is a deterministic offline stand-in; point "
-                "OEE_BASE_URL/OEE_MODEL at your single local LLM for real use"
-            )
+        known = known_providers()
+        if self.provider not in known:
+            problems.append(f"provider must be one of {known}, got {self.provider!r}")
         if self.require_single_model and self.embed_provider == "external":
             problems.append("external embedding/RAG services are forbidden by design")
         if self.leaf_chunk_overlap >= self.leaf_chunk_tokens:

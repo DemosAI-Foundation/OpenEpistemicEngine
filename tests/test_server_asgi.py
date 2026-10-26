@@ -4,13 +4,13 @@ import json
 import pytest
 
 from oee.server import create_app
-from tests.conftest import DOC, mock_settings
+from tests.conftest import DOC, stub_settings
 
 DOC_PAGE = DOC
 
 
 def make_client(tmp_path):
-    app = create_app(mock_settings(str(tmp_path / "api.db")))
+    app = create_app(stub_settings(str(tmp_path / "api.db")))
 
     async def call(method, path, body=None):
         payload = b"" if body is None else json.dumps(body).encode()
@@ -57,7 +57,7 @@ def client(tmp_path):
 
 def test_status_and_prompts_are_public(client):
     status, body = client("GET", "/api/status")
-    assert status == 200 and body["settings"]["provider"] == "mock"
+    assert status == 200 and body["settings"]["provider"] == "stub"
     status, prompts = client("GET", "/api/prompts")
     assert status == 200
     assert "Prompt Sanitizer" in prompts["pass1_system"]
@@ -127,7 +127,7 @@ def test_ask_returns_full_transparency(client):
         "5.pass2_generation", "6.epistemic_backstop", "7.case_state_update"]
     assert res["prompts"]["pass1_user"].count("Isn't it obvious") == 1
     assert "obvious" in res["sidecar"]["citations"][0]["chunk_id"] or True
-    assert res["usage"]["provider"] == "mock"
+    assert res["usage"]["provider"] == "stub"
     status, turns = client("GET", "/api/turns?session=default")
     assert status == 200 and len(turns["turns"]) == 1
 
@@ -150,7 +150,7 @@ def test_eval_endpoint_runs_the_four_tests(client):
 
 def test_ask_stream_emits_stages_deltas_then_the_result(tmp_path):
     from fastapi.testclient import TestClient
-    app = create_app(mock_settings(str(tmp_path / "stream.db")))
+    app = create_app(stub_settings(str(tmp_path / "stream.db")))
     events = []
     with TestClient(app).stream("POST", "/api/ask/stream",
                                 json={"text": "What drift?"}) as r:

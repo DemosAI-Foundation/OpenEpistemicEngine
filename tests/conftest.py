@@ -7,21 +7,28 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault("OEE_SEMANTIC", "off")
 
+from oee import llm
 from oee.config import Settings
 from oee.engine import Engine
+from tests.stub_provider import StubProvider
+
+# the in-test provider double: unit tests never touch a network endpoint, and
+# the product itself ships no offline stand-in
+llm.PROVIDER_REGISTRY.setdefault("stub", StubProvider)
 
 
-def mock_settings(db_path: str) -> Settings:
+def stub_settings(db_path: str) -> Settings:
     s = Settings()
-    s.provider = "mock"
+    s.provider = "stub"
     s.db_path = db_path
     s.embed_provider = "local"
     return s
 
 
+
 @pytest.fixture
 def engine(tmp_path):
-    eng = Engine(mock_settings(str(tmp_path / "test.db")))
+    eng = Engine(stub_settings(str(tmp_path / "test.db")))
     yield eng
     eng.store.close()
 

@@ -3,7 +3,7 @@ import pytest
 
 from oee.engine import Engine
 from oee.retrieval import _rrf
-from tests.conftest import DOC, mock_settings
+from tests.conftest import DOC, stub_settings
 
 QUERY = ("Combining the 1998 drift measurement at 85C with the field failure rate "
          "of 11 percent per year: does the logbook verify the self-calibration claim?")
@@ -11,7 +11,7 @@ QUERY = ("Combining the 1998 drift measurement at 85C with the field failure rat
 
 @pytest.fixture
 def fine_engine(tmp_path):
-    s = mock_settings(str(tmp_path / "fine.db"))
+    s = stub_settings(str(tmp_path / "fine.db"))
     s.leaf_chunk_tokens = 45
     s.leaf_chunk_overlap = 8
     s.cluster_size = 2

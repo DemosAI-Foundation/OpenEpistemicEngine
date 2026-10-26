@@ -4,7 +4,7 @@ from oee import prompts as P
 from oee.engine import Engine
 from oee.llm import LLMResponse, ProviderError, build_provider
 from oee.prompts import CONFIDENCE_TIERS
-from tests.conftest import DOC, mock_settings
+from tests.conftest import DOC, stub_settings
 
 
 def test_full_turn_produces_seven_traced_steps(engine):
@@ -83,13 +83,13 @@ class DownProvider:
 
     def __init__(self, settings):
         self.settings = settings
-        self._mock = build_provider(settings)
+        self._base_double = build_provider(settings)
 
     def chat(self, system, user, schema=None, kind="generic", temperature=None,
              max_tokens=None):
         if kind == "pass2":
             raise ProviderError("ollama HTTP 502: model crashed")
-        return self._mock.chat(system, user, schema=schema, kind=kind,
+        return self._base_double.chat(system, user, schema=schema, kind=kind,
                                temperature=temperature, max_tokens=max_tokens)
 
     def embed(self, texts):
@@ -100,7 +100,7 @@ class DownProvider:
 
 
 def test_generation_failure_is_reported_not_hidden(tmp_path):
-    settings = mock_settings(str(tmp_path / "down.db"))
+    settings = stub_settings(str(tmp_path / "down.db"))
     engine = Engine(settings)
     engine.provider = DownProvider(settings)
     res = engine.ask("Anything at all?")
@@ -124,7 +124,7 @@ def test_control_tokens_in_question_never_reach_generation(engine):
 
 def test_status_endpoint_shape(engine):
     status = engine.status()
-    assert status["settings"]["provider"] == "mock"
+    assert status["settings"]["provider"] == "stub"
     assert status["provider_health"]["ok"] is True
     assert status["counts"]["documents"] == 0
     assert status["index"]["nodes_indexed"] == 0
@@ -193,7 +193,7 @@ class StructuredProvider:
 
 
 def test_sidecar_recovers_citations_from_a_model_that_omits_them(tmp_path):
-    settings = mock_settings(str(tmp_path / "drift.db"))
+    settings = stub_settings(str(tmp_path / "drift.db"))
     engine = Engine(settings)
     engine.provider = DriftyProvider(settings)
     engine.ingest(DOC)
@@ -215,7 +215,7 @@ def test_sidecar_recovers_citations_from_a_model_that_omits_them(tmp_path):
 
 
 def test_citation_rows_are_derived_from_inline_ids_when_the_model_gives_nothing(tmp_path):
-    settings = mock_settings(str(tmp_path / "drift2.db"))
+    settings = stub_settings(str(tmp_path / "drift2.db"))
     engine = Engine(settings)
     engine.provider = DriftyProvider(settings, emit_provenance=False)
     engine.ingest(DOC)
@@ -229,7 +229,7 @@ def test_citation_rows_are_derived_from_inline_ids_when_the_model_gives_nothing(
 
 
 def test_structured_model_metadata_is_rendered_as_text(tmp_path):
-    settings = mock_settings(str(tmp_path / "struct.db"))
+    settings = stub_settings(str(tmp_path / "struct.db"))
     engine = Engine(settings)
     engine.provider = StructuredProvider(settings)
     engine.ingest(DOC)
@@ -277,7 +277,7 @@ class BasisDriftProvider:
 
 
 def test_basis_is_auto_corrected_when_citations_exist(tmp_path):
-    settings = mock_settings(str(tmp_path / "basis.db"))
+    settings = stub_settings(str(tmp_path / "basis.db"))
     engine = Engine(settings)
     engine.provider = BasisDriftProvider(settings)
     engine.ingest(DOC)
@@ -292,7 +292,7 @@ def test_basis_is_auto_corrected_when_citations_exist(tmp_path):
 
 
 def test_generation_runs_at_low_temperature_for_structural_compliance(tmp_path):
-    settings = mock_settings(str(tmp_path / "temp.db"))
+    settings = stub_settings(str(tmp_path / "temp.db"))
     settings.temperature = 0.9
     engine = Engine(settings)
     prov = BasisDriftProvider(settings)
@@ -309,7 +309,7 @@ def test_pass1_prompt_demands_literal_bias_strings():
 
 
 def test_generation_step_reports_the_structured_output_mode(tmp_path):
-    settings = mock_settings(str(tmp_path / "fmt.db"))
+    settings = stub_settings(str(tmp_path / "fmt.db"))
     engine = Engine(settings)
     engine.provider = BasisDriftProvider(settings)
     engine.ingest(DOC)
@@ -321,7 +321,7 @@ def test_generation_step_reports_the_structured_output_mode(tmp_path):
 
 
 def test_citations_to_the_attached_document_card_count_as_grounded(tmp_path):
-    settings = mock_settings(str(tmp_path / "cardcite.db"))
+    settings = stub_settings(str(tmp_path / "cardcite.db"))
     engine = Engine(settings)
     engine.ingest(DOC)
     cards = engine.index.cards()
@@ -334,7 +334,7 @@ def test_citations_to_the_attached_document_card_count_as_grounded(tmp_path):
          "basis": ["reference"], "confidence_tier": CONFIDENCE_TIERS[0],
          "assumptions_used": [], "unknowns": [], "what_would_change": [],
          "warnings": []},
-        {"leaves": [], "sections": [], "channels": {}}, True, "mock", 1,
+        {"leaves": [], "sections": [], "channels": {}}, True, "stub", 1,
         {"tokens": 100, "budget_tokens": 4000}, [],
         {card["node_id"]})
     row = sc["citations"][0]
@@ -387,7 +387,7 @@ class ThunkProvider:
 
 
 def test_best_of_two_and_critic_wrap_generation_on_high_stakes_turns(tmp_path):
-    settings = mock_settings(str(tmp_path / "bestof.db"))
+    settings = stub_settings(str(tmp_path / "bestof.db"))
     settings.best_of = "on"
     engine = Engine(settings)
     prov = ThunkProvider(settings)
@@ -406,7 +406,7 @@ def test_best_of_two_and_critic_wrap_generation_on_high_stakes_turns(tmp_path):
 
 
 def test_simple_turns_stay_a_single_pass(tmp_path):
-    settings = mock_settings(str(tmp_path / "single.db"))
+    settings = stub_settings(str(tmp_path / "single.db"))
     engine = Engine(settings)
     engine.ingest(DOC)
     res = engine.ask("What does the logbook record?")
@@ -446,7 +446,7 @@ def test_ask_streams_stage_events_and_token_deltas(engine):
     assert deltas and "".join(deltas).lstrip().startswith("{")
     assert res["sidecar"]["chat_reply"]
     assert "streamed" in res["prompts"] .get("pass2_meta", {}) or \
-        res["usage"]["provider"] == "mock"
+        res["usage"]["provider"] == "stub"
 
 
 def test_sidecar_marks_undeclared_tier_and_field_sources(engine):

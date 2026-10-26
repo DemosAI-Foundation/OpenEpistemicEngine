@@ -1,8 +1,10 @@
 """Single-local-LLM provider layer. One endpoint, one model, used for every pass.
 
-Providers: ollama (/api/chat), openai-compatible (/v1/chat/completions), and
-`mock`, a deterministic offline stand-in used by the test suite and the eval
-harness so the architecture is verifiable without a GPU.
+Providers: ollama (/api/chat) and openai-compatible (/v1/chat/completions).
+There is no offline stand-in: with no local model configured, configuration
+raises and the engine does not run. The test suite registers an in-test double
+in PROVIDER_REGISTRY (tests/stub_provider.py) so unit tests never touch a
+network endpoint.
 """
 
 from __future__ import annotations
@@ -513,14 +515,20 @@ class OpenAICompatProvider(ProviderBase):
                     "model": self.settings.model, "detail": str(exc)}
 
 
-def build_provider(settings: Settings) -> ProviderBase:
-    if settings.provider == "ollama":
-        return OllamaProvider(settings)
-    if settings.provider == "openai":
-        return OpenAICompatProvider(settings)
-    from .mock_model import MockProvider
+PROVIDER_REGISTRY: dict[str, type[ProviderBase]] = {
+    "ollama": OllamaProvider,
+    "openai": OpenAICompatProvider,
+}
 
-    return MockProvider(settings)
+
+def build_provider(settings: Settings) -> ProviderBase:
+    cls = PROVIDER_REGISTRY.get(settings.provider)
+    if cls is None:
+        raise ProviderError(
+            f"unknown provider {settings.provider!r}: build_provider requires "
+            f"{', '.join(sorted(PROVIDER_REGISTRY))}. No offline stand-in exists."
+        )
+    return cls(settings)
 
 
 def describe_provider(provider: ProviderBase) -> dict:

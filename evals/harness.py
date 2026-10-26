@@ -1,9 +1,10 @@
 """The 4-test builder eval harness for the Open Epistemic Engine MVP.
 
 Runs the whole pipeline in-process against a throwaway database and prints a
-pass/fail report. `provider="mock"` verifies phases 1/3/4-assembly/5 and the
-retrieval path deterministically with no GPU; point OEE_PROVIDER at your local
-model to run the same suite against real generations.
+pass/fail report. It runs against your single configured local model
+(OEE_PROVIDER=ollama|openai, OEE_MODEL=…): there is no offline stand-in, so
+every result is a real generation. The deterministic pipeline regression
+coverage lives in the pytest suite (tests/, provider double).
 """
 
 from __future__ import annotations
@@ -90,8 +91,11 @@ class Runner:
         self.settings = settings
         self.engine: Engine | None = None
 
+    def fresh_settings(self) -> Settings:
+        return Settings()
+
     def new_engine(self, db_path: str) -> Engine:
-        settings = Settings()
+        settings = self.fresh_settings()
         for key, value in self.settings.as_public_dict().items():
             if hasattr(settings, key):
                 setattr(settings, key, value)
@@ -304,6 +308,8 @@ def run_suite(settings: Settings | None = None, only: str | None = None) -> dict
 
 
 def main(argv: list[str]) -> int:
+    from oee.config import ProviderConfigError, autoconfigure
+
     settings = Settings()
     for arg in argv:
         if arg.startswith("--provider="):
@@ -314,6 +320,13 @@ def main(argv: list[str]) -> int:
             settings.base_url = arg.split("=", 1)[1]
         if arg.startswith("--only="):
             only = arg.split("=", 1)[1]
+    if not settings.provider:
+        try:
+            autoconfigure(settings)
+        except ProviderConfigError as exc:
+            print(f"cannot run the builder eval: {exc}")
+            print("pass --provider=ollama|openai --model=… (the engine has no offline stand-in).")
+            return 2
     report = run_suite(settings, only=locals().get("only"))
     width = 74
     print("=" * width)

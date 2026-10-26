@@ -43,14 +43,17 @@ def test_autoconfig_wires_the_answered_endpoint(monkeypatch):
     assert not s.validate()
 
 
-def test_no_endpoint_falls_back_to_mock_with_a_visible_note(monkeypatch):
+def test_no_endpoint_refuses_to_configure(monkeypatch):
+    """There is no offline stand-in: with no local model answering, configuration
+    raises instead of silently running a non-model."""
     monkeypatch.setattr(config, "probe_endpoints", lambda *a, **k: None)
     s = Settings()
     s.provider = ""
-    autoconfigure(s)
-    assert s.provider == "mock"
-    assert "mock stand-in" in s.wiring
-    assert any("deterministic offline stand-in" in p for p in s.validate())
+    with pytest.raises(config.ProviderConfigError) as exc:
+        autoconfigure(s)
+    assert "no single local LLM is configured" in str(exc.value)
+    assert "no offline stand-in" in str(exc.value)
+    assert s.provider == ""
 
 
 def test_probe_targets_are_local(monkeypatch):
@@ -77,5 +80,7 @@ def test_probe_targets_are_local(monkeypatch):
 
 def test_load_settings_never_leaves_provider_unset(monkeypatch):
     monkeypatch.setattr(config, "probe_endpoints", lambda *a, **k: None)
-    s = load_settings()
-    assert s.provider in config.PROVIDERS
+    with pytest.raises(config.ProviderConfigError):
+        load_settings()
+    s = load_settings(provider="openai", base_url="http://127.0.0.1:8082")
+    assert s.provider in config.known_providers()
