@@ -20,6 +20,40 @@ def test_nli_is_none_when_no_model_is_loaded():
         assert semantic.nli("the record measures drift", "drift was measured") is None
 
 
+def test_nli_orientation_premise_entails_hypothesis_not_the_reverse():
+    """The integration bug to guard: premise/hypothesis swap. entailment must
+    fire in the (premise, hypothesis) direction the callers use:
+    citation: nli(chunk_text, model_claim); dialectic: nli(thesis, antithesis)."""
+    if semantic.status()["nli"] == "unavailable":
+        return
+    fwd = semantic.nli("The study used 50 participants.",
+                       "The study used participants.")
+    assert fwd is not None and fwd["label"] == "entailment"
+    rev = semantic.nli("The study used participants.",
+                       "The study used 50 participants.")
+    assert rev is not None and rev["label"] != "entailment"
+
+
+def test_nli_sample_size_does_not_entail_effectiveness():
+    if semantic.status()["nli"] == "unavailable":
+        return
+    result = semantic.nli("Methods section. The experiment used 50 participants.",
+                          "The method is effective.")
+    assert result is not None and result["label"] in ("neutral", "contradiction")
+
+
+def test_nli_strawman_direction_thesis_entails_restated_antithesis():
+    if semantic.status()["nli"] == "unavailable":
+        return
+    thesis = "The survey shows 70 percent support the policy, so the policy is popular."
+    restated = "The survey shows that 70 percent of respondents support the policy."
+    genuine = ("However, survey popularity is not endorsement: respondents faced a "
+               "leading question, and the sample excludes the communities that bear "
+               "the policy's costs.")
+    assert semantic.nli(thesis, restated)["label"] == "entailment"
+    assert semantic.nli(thesis, genuine)["label"] != "entailment"
+
+
 def test_status_shape_is_ui_ready():
     st = semantic.status()
     assert set(st) == {"mode", "similarity", "nli", "embeddings", "notes"}

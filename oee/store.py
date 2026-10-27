@@ -167,6 +167,26 @@ class Store:
             ).fetchall()
         return {r["mode"]: int(r["n"]) for r in rows}
 
+    def vector_dims(self) -> list[int]:
+        with self._lock:
+            rows = self.db.execute(
+                "SELECT dim, COUNT(*) AS n FROM vectors GROUP BY dim"
+            ).fetchall()
+        out: list[int] = []
+        for r in rows:
+            out += [int(r["dim"])] * int(r["n"])
+        return out
+
+    def save_vectors(self, vectors: dict[str, list[float]], modes: dict[str, str]) -> None:
+        with self._lock:
+            for node_id, vec in vectors.items():
+                self.db.execute(
+                    "INSERT OR REPLACE INTO vectors (node_id, dim, mode, vec) VALUES (?,?,?,?)",
+                    (node_id, len(vec), modes.get(node_id, "hash-local"),
+                     sqlite3.Binary(_pack(vec))),
+                )
+            self.db.commit()
+
     # ----------------------------------------------------------------- turns
     def add_turn(self, turn: dict) -> int:
         with self._lock:

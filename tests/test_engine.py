@@ -343,6 +343,51 @@ def test_citations_to_the_attached_document_card_count_as_grounded(tmp_path):
     engine.store.close()
 
 
+def test_missing_bottom_line_is_derived_from_the_reply_not_left_blank(engine):
+    """Symmetric to promoting the bottom line when chat_reply is empty: when the
+    model omits bottom_line but answers, recover it from the model's own first
+    direct sentence, stripped of modal/citation markers and within 600 chars."""
+    sc = engine._sidecar(
+        {"chat_reply": "**Direct finding.** [FACT] The 1998 study measured drift, not "
+                       "moisture ingress [R1-C2]. It does not verify the field claim "
+                       "[R1-C1].",
+         "citations": [], "basis": ["parametric"], "confidence_tier": CONFIDENCE_TIERS[1],
+         "assumptions_used": [], "unknowns": [], "what_would_change": [], "warnings": []},
+        {"leaves": [], "sections": [], "channels": {}}, False, "stub", 1,
+        {"tokens": 100, "budget_tokens": 4000}, [])
+    bl = sc["bottom_line"]
+    assert bl and len(bl) <= 600
+    assert "[FACT]" not in bl and "[R1-" not in bl and "**" not in bl
+    assert "1998 study measured drift" in bl
+    assert any("bottom_line auto-derived" in w for w in sc["warnings"])
+    engine.store.close()
+
+
+def test_derived_bottom_line_stays_under_the_char_cap():
+    from oee import engine as E
+    long_reply = ("The record " + "measures drift under stress across many long clauses " * 60)
+    bl = E._derive_bottom_line(long_reply + " [FACT]")
+    assert len(bl) <= 600
+    assert bl.endswith("…")
+
+
+def test_hallucinated_citations_drop_reference_from_basis(engine):
+    """Ghost-document case: no reference ingested, every cited chunk ID invented
+    for inline text. 'reference' must come out of basis - nothing is grounded."""
+    full = engine._sidecar(
+        {"chat_reply": "The pasted text asserts X [FACT].",
+         "bottom_line": "Inline text only.",
+         "citations": [{"chunk_id": "R1-C1", "quote": "asserts X"}],
+         "basis": ["reference", "inference"], "confidence_tier": CONFIDENCE_TIERS[1],
+         "assumptions_used": [], "unknowns": [], "what_would_change": [], "warnings": []},
+        {"leaves": [], "sections": [], "channels": {}}, False, "stub", 1,
+        {"tokens": 100, "budget_tokens": 4000}, [])
+    assert "reference" not in full["basis"]
+    assert "inference" in full["basis"]
+    assert any("'reference' removed" in w for w in full["warnings"])
+    engine.store.close()
+
+
 class ThunkProvider:
     """Bad payload first; a compliant one only when asked to repair."""
 
@@ -426,7 +471,11 @@ def test_citation_rows_carry_the_nli_verdicts(engine, monkeypatch):
     res = engine.ask("What does the reference say about drift?")
     rows = res["sidecar"]["citations"]
     assert rows and all(r.get("nli_label") == "entailment" for r in rows)
-    assert all(r.get("nli_score") == 0.93 for r in rows)
+    # verbatim quotes are decided lexically (score 1.0, no model call); the
+    # rest carry the model's score
+    assert all(r.get("nli_score") == 0.93
+               or (r.get("nli_score") == 1.0
+                   and r.get("nli_path") == "lexical-verbatim") for r in rows)
 
 
 def test_ask_streams_stage_events_and_token_deltas(engine):

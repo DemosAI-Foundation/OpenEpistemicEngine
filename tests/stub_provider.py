@@ -272,8 +272,8 @@ class StubProvider(ProviderBase):
                 f"question assumes. Read it as {tier}; {subject.lower().rstrip('?')}.")
 
     def _dialectic(self, leaves, card, has_ref, tier):
-        thesis = ("The reference supports the stated position as far as its evidence "
-                  "reaches." if has_ref else
+        thesis = ("The reference documents measurements that support the stated "
+                  "position on the record." if has_ref else
                   "The position is internally coherent and worth taking seriously.")
         counter = ""
         for _cid, txt in leaves:

@@ -5,8 +5,6 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-os.environ.setdefault("OEE_SEMANTIC", "off")
-
 from oee import llm
 from oee.config import Settings
 from oee.engine import Engine

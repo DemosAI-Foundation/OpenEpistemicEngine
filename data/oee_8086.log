@@ -1,0 +1,577 @@
+wiring: explicit provider=openai
+provider: openai | model: strata | base_url: http://127.0.0.1:8082 | window: 32768 | embed_model: nomic-embed-text
+INFO:     Started server process [7479]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:50636 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50638 - "POST /api/ask HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:57228 - "POST /api/ask HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:57244 - "POST /api/ask HTTP/1.1" 422 Unprocessable Entity
+INFO:     127.0.0.1:58970 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36294 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36294 - "GET /static/app.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:36294 - "GET /static/styles.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:36294 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36294 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36294 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43534 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58014 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50764 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "POST /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/jobs/5336eccab2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39876 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [7479]
+INFO:     Started server process [15526]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 12573.88it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 9546.63it/s]
+INFO:     127.0.0.1:45440 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41310 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45076 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45076 - "POST /api/ask HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/bb/.local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 1281, in handle
+    await super().handle(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/routing.py", line 280, in handle
+    await self.app(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 354, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2706, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/server.py", line 73, in ask
+    result = engine.ask(body.text, session=body.session)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/engine.py", line 106, in ask
+    search = self.index.search(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/retrieval.py", line 62, in search
+    dense_rank, dense_scores = self._dense(query, pool)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/retrieval.py", line 205, in _dense
+    sims = self._matrix @ q
+           ~~~~~~~~~~~~~^~~
+ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 384 is different from 256)
+INFO:     127.0.0.1:42056 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42056 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42064 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42064 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42064 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:42064 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42064 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:42072 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59452 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59452 - "POST /api/ask HTTP/1.1" 500 Internal Server Error
+ERROR:    Exception in ASGI application
+Traceback (most recent call last):
+  File "/home/bb/.local/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+    result = await app(  # type: ignore[func-returns-value]
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+    return await self.app(scope, receive, send)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/applications.py", line 1163, in __call__
+    await super().__call__(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/applications.py", line 96, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+    raise exc
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+    await self.app(scope, receive, _send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+    await self.app(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/routing.py", line 670, in __call__
+    await self.middleware_stack(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 2734, in app
+    await route.handle(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 1281, in handle
+    await super().handle(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/routing.py", line 280, in handle
+    await self.app(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 158, in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+    raise exc
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 144, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 706, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/fastapi/routing.py", line 354, in run_endpoint_function
+    return await run_in_threadpool(dependant.call, **values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/starlette/concurrency.py", line 34, in run_in_threadpool
+    return await anyio.to_thread.run_sync(func)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+    return await get_async_backend().run_sync_in_worker_thread(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2706, in run_sync_in_worker_thread
+    return await future
+           ^^^^^^^^^^^^
+  File "/home/bb/.local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+    result = context.run(func, *args)
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/server.py", line 73, in ask
+    result = engine.ask(body.text, session=body.session)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/engine.py", line 106, in ask
+    search = self.index.search(
+             ^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/retrieval.py", line 62, in search
+    dense_rank, dense_scores = self._dense(query, pool)
+                               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/bb/Downloads/OpenEpistemicEngine/oee/retrieval.py", line 205, in _dense
+    sims = self._matrix @ q
+           ~~~~~~~~~~~~~^~~
+ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0, with gufunc signature (n?,k),(k,m?)->(n?,m?) (size 384 is different from 256)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [15526]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10724.72it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 11561.47it/s]
+INFO:     Started server process [18567]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:56878 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56892 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60768 - "DELETE /api/documents/R1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60768 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58174 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58174 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58190 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58190 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58190 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:58190 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58190 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53158 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38802 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43008 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43008 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43018 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43018 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43018 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43018 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43018 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43018 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43012 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43012 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:38394 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:35354 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "POST /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53646 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/jobs/81976221ce HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52344 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [18567]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 5756.95it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 5216.80it/s]
+INFO:     Started server process [27980]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:56070 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50240 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53062 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53062 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53076 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53076 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53076 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53076 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53076 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53076 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:45692 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [27980]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10444.94it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 9781.45it/s]
+INFO:     Started server process [40427]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:52208 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52218 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [40427]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11790.43it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10550.71it/s]
+INFO:     Started server process [43796]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:33574 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33580 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52858 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52858 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52868 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52868 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [43796]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 7163.92it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 5847.03it/s]
+INFO:     Started server process [50696]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:44980 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56178 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56178 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56192 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56192 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56192 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:56192 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56192 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54794 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54794 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54806 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54806 - "DELETE /api/documents/R1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54806 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for connections to close. (CTRL+C to force quit)
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [50696]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11777.58it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 9733.06it/s]
+INFO:     Started server process [54699]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:33790 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33794 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33798 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33798 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33798 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33798 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33810 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33810 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33816 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33816 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33816 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:33816 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33816 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33816 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60834 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60834 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60834 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60834 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60834 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:41342 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44470 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44470 - "POST /api/ask/stream HTTP/1.1" 200 OK

@@ -73,6 +73,26 @@ def epistemic_backstop(chat_reply: str, has_references: bool,
     if citations:
         flags.extend(nli_check_citations(citations, chunk_texts or {}, chat_reply))
 
+    # Ghost-document guard. With no reference ingested, any chunk ID in the reply
+    # is one the model invented for text that only ever sat in the prompt as
+    # inline user data. Flag it loudly and strip the fake provenance from the
+    # prose: the analysis of the inline text stays, the citation does not.
+    if not has_references:
+        valid_ids = set(retrieved_ids or set())
+        cited_ids = {m.group(1) for m in CITATION_RE.finditer(chat_reply)} | {
+            m.group(0)[1:-1] for m in CARD_CITATION_RE.finditer(chat_reply)}
+        ghosts = sorted(cid for cid in cited_ids if cid not in valid_ids)
+        if ghosts:
+            flags.append(
+                "WARNING: model invented reference IDs for inline prompt text "
+                f"({', '.join(ghosts)}): no document was attached, so those chunks "
+                "do not exist. The citation tags are stripped; the inline text is "
+                "user input, not a reference, and must not be cited as one."
+            )
+            if rewrite:
+                for cid in ghosts:
+                    chat_reply = chat_reply.replace(f"[{cid}]", " ")
+
     if not MODAL_TAG_RE.search(chat_reply):
         flags.append(
             "POLICY: chat_reply contains no modal tags; rule 3 requires [FACT]/"
@@ -148,7 +168,10 @@ def check_dialectic_quality(dialectic) -> list[str]:
                      "(strawman shape).")
     if antithesis and thesis:
         straw = dialectic_opposition_check(thesis, antithesis)
-        if straw:
+        if straw is None and semantic.status()["nli"] == "unavailable":
+            flags.append("FALLBACK: NLI model unavailable; the strawman (entailment) "
+                         "check is skipped - only the opposition-marker rules apply.")
+        elif straw:
             flags.append(f"DIALECTIC WEAK: {straw}.")
     return flags
 
@@ -190,6 +213,14 @@ def nli_check_citations(citations: list[dict], chunk_texts: dict[str, str],
         source = (chunk_texts or {}).get(cid, "")
         if not claim:
             continue
+        if (source or "").strip() and _quote_in(claim, source):
+            # a verbatim quote is entailed by identity: decided lexically,
+            # no model call. Small NLI cross-encoders are unreliable on long
+            # premises and label verbatim substrings as contradictions.
+            row["nli_label"] = "entailment"
+            row["nli_score"] = 1.0
+            row["nli_path"] = "lexical-verbatim"
+            continue
         result = semantic.nli(source, claim)
         if not (source or "").strip():
             row["nli_label"] = "no-chunk-text"
@@ -201,12 +232,17 @@ def nli_check_citations(citations: list[dict], chunk_texts: dict[str, str],
         checked += 1
         row["nli_label"] = result["label"]
         row["nli_score"] = result["score"]
+        row["nli_path"] = result.get("path", "model")
         if result["label"] == "contradiction":
             flags.append(f"CLAIM_CONTRADICTS_SOURCE: [{cid}] is labelled contradiction "
                          f"against the stored chunk (score {result['score']}).")
         elif result["label"] == "neutral":
             flags.append(f"CLAIM_UNSUPPORTED: [{cid}] is labelled neutral - the chunk "
                          f"neither supports nor contradicts the claim (score {result['score']}).")
+    if any(row.get("nli_label") == "unavailable" for row in citations):
+        flags.append("FALLBACK: NLI model unavailable; citation verification stays on the "
+                     "lexical quote check (substring match against the stored chunk). "
+                     "No semantic entailment label was invented.")
     return flags
 
 

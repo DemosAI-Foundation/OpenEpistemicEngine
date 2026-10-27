@@ -81,6 +81,37 @@ def test_tree_cannot_break_out_of_its_envelope():
     assert pack["delimiter_flags"]
 
 
+def test_long_user_request_is_not_clipped_at_the_old_1200_char_cap():
+    """A ~600-token message (~2600 chars) used to be cut to 1200 chars in the
+    Pass 2 prompt, so the model never saw the second half. The request now gets a
+    char budget scaled to the token budget and survives a normal-length turn."""
+    long_request = "The Kessel circuit analysis point number " + " ".join(
+        f"clause {i} about drift and moisture ingress" for i in range(90))
+    assert len(long_request) > 2400
+    pack = A.assemble({"rolling_summary": "", "established_claims": [], "open_questions": []},
+                      {"leaves": [row("R1-C1", "leaf", "drift window 200 hours")],
+                       "sections": [], "channels": {"bm25_hits": 1, "dense_hits": 1, "rrf_k": 60}},
+                      [], long_request, long_request, 9000)
+    assert pack["raw_request_truncated"] is False
+    assert long_request in pack["user_prompt"]
+    assert "clause 89 about drift and moisture ingress\n</raw_request_for_reference_only>" \
+        in pack["user_prompt"]  # the tail of the request survived
+
+
+def test_runaway_request_shrinks_only_after_reference_floor_and_stays_visible():
+    """A 200k-char request under a tight budget must degrade to the floor, not
+    overflow: the model still sees the head (and the request is flagged)."""
+    huge = "filler " * 40000  # ~280k chars
+    pack = A.assemble({"rolling_summary": "", "established_claims": [], "open_questions": []},
+                      {"leaves": [row(f"R1-C{i}", "leaf", "chunk " * 60) for i in range(1, 9)],
+                       "sections": [], "channels": {"bm25_hits": 8, "dense_hits": 8, "rrf_k": 60}},
+                      [], "q", huge, 1200)
+    assert pack["raw_request_truncated"] is True
+    assert pack["raw_request_budget"] >= A.RAW_REQUEST_MIN_CHARS
+    assert len(pack["user_prompt"]) < len(huge)
+    assert "filler" in pack["user_prompt"]  # the request head is still present
+
+
 def test_parametric_turn_states_the_rule_without_forcing_the_boilerplate_opener():
     pack = A.assemble({"rolling_summary": "", "established_claims": [], "open_questions": []},
                     {"leaves": [], "sections": [], "cards": [],

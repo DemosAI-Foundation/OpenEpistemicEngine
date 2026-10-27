@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 
 import pytest
 
@@ -94,6 +95,7 @@ def test_document_ingest_is_async_and_traced(client):
         if row["status"] in ("done", "error"):
             final = row
             break
+        time.sleep(0.1)  # ingest embeds on a worker thread; give it wall time
     assert final and final["status"] == "done"
     assert final["result"]["leaves"] >= 1
     assert [t["step"] for t in final["result"]["trace"]][0] == "3a.secure_frontend"
@@ -118,6 +120,7 @@ def test_ask_returns_full_transparency(client):
         _status, row = client("GET", f"/api/jobs/{job['job_id']}")
         if row["status"] in ("done", "error"):
             break
+        time.sleep(0.1)  # ingest embeds on a worker thread; give it wall time
     status, res = client("POST", "/api/ask", {
         "text": "What measured evidence supports the drift claim? Isn't it obvious it works?",
         "session": "default"})

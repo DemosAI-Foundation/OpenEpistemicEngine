@@ -3,6 +3,7 @@ model, so the user always sees the same de-biasing step in the trace."""
 
 from __future__ import annotations
 
+import os
 import re
 import time
 
@@ -15,7 +16,7 @@ from .security import strip_reference_delimiter_collisions
 from .textutil import tokenize
 
 ANSWERISH = re.compile(r"(?i)^(the answer is|to answer|answering:|in summary,? the answer)")
-MAX_LEN = 900
+MAX_LEN = int(os.getenv("OEE_S2A_MAX_LEN", "4000"))
 
 
 def deterministic_sanitize(raw: str, has_reference: bool) -> tuple[str, list[str]]:

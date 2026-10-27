@@ -126,6 +126,11 @@ class Settings:
     embed_provider: str = os.getenv("OEE_EMBED_PROVIDER", "auto")
     embed_model: str = os.getenv("OEE_EMBED_MODEL", "nomic-embed-text")
     max_context_tokens: int = int(os.getenv("OEE_MAX_CONTEXT_TOKENS", "9000"))
+    # Dense-similarity floor: below this the retrieved chunks are topically
+    # unrelated to the query, and the grounding is disclosed as FALLBACK.
+    # MiniLM-calibrated: unrelated pairs measure <= 0.13, relevant pairs
+    # >= 0.39; tune with OEE_WEAK_GROUNDING_COSINE.
+    weak_grounding_cosine: float = float(os.getenv("OEE_WEAK_GROUNDING_COSINE", "0.25"))
 
     db_path: str = os.getenv("OEE_DB", os.path.join(os.getcwd(), "data", "oee.db"))
     require_single_model: bool = True

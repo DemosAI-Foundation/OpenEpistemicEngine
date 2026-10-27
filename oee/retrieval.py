@@ -27,7 +27,21 @@ class HybridIndex:
         self._ids: list[str] = []
         self._generation = -1
         self.generation = 0
+        self.target_mode: str | None = None
+        self.target_dim: int | None = None
+        self.stale_vectors = 0
         self.refresh()
+
+    def active_signature(self) -> tuple[str | None, int | None]:
+        """The (mode, dim) of the embedder that is live right now. The dense
+        channel is a single vector space, so stored vectors and the query must
+        share this dimension; a provider swap or a semantics toggle changes it."""
+        try:
+            mat, mode = self.embedder.encode(["__oee_embedding_probe__"])
+            dim = int(mat.shape[1]) if getattr(mat, "size", 0) else None
+            return mode, dim
+        except Exception:
+            return self.embedder.fallback.mode, self.embedder.fallback.dim
 
     def refresh(self, force: bool = False) -> bool:
         generation = len(self.store.nodes(("leaf", "section")))
@@ -38,13 +52,22 @@ class HybridIndex:
         self._ids = []
         rows = []
         vectors = self.store.vectors()
+        self.target_mode, self.target_dim = self.active_signature()
+        self.stale_vectors = 0
         for node in self.store.nodes(("leaf", "section")):
             self._nodes[node["node_id"]] = node
             self.lexical.add(node["node_id"], node["text"])
             vec = vectors.get(node["node_id"])
-            if vec:
-                self._ids.append(node["node_id"])
-                rows.append(vec[0])
+            if not vec:
+                continue
+            v, _mode = vec
+            if self.target_dim is None or len(v) != self.target_dim:
+                # stored under a different embedder: cosine across two vector
+                # spaces is meaningless, and the matmul would crash. Re-embed.
+                self.stale_vectors += 1
+                continue
+            self._ids.append(node["node_id"])
+            rows.append(v)
         self._matrix = np.asarray(rows, dtype=np.float32) if rows else None
         if self._matrix is not None:
             norms = np.linalg.norm(self._matrix, axis=1, keepdims=True)
@@ -198,6 +221,11 @@ class HybridIndex:
             return [], {}
         qvec, _mode = self.embedder.encode_one(query)
         q = np.asarray(qvec, dtype=np.float32)
+        if q.size != self._matrix.shape[1]:
+            # the query embedder no longer matches the indexed space (a provider
+            # recovered, semantics toggled): skip dense, never crash. refresh()
+            # on the next generation change re-embeds and realigns.
+            return [], {}
         n = float(np.linalg.norm(q))
         if n == 0:
             return [], {}
@@ -220,6 +248,9 @@ class HybridIndex:
             "nodes_indexed": len(self._nodes),
             "dense_vectors": len(self._ids),
             "vector_modes": self.store.vector_mode_counts(),
+            "target_mode": self.target_mode,
+            "target_dim": self.target_dim,
+            "stale_vectors": self.stale_vectors,
             "generation": self.generation,
             "embed_last_mode": self.embedder.last_mode,
         }

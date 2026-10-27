@@ -1,5 +1,5 @@
-"""The 24-test hard suite: adversarial, adversarial-pressure, reasoning,
-provenance, dialectic, memory, schema, and retrieval edge cases.
+"""The 27-test hard suite: adversarial, adversarial-pressure, reasoning,
+provenance, dialectic, memory, schema, retrieval, and NLI-layer edge cases.
 
 Every check carries a `kind`:
 
@@ -24,8 +24,6 @@ import re
 import sys
 import tempfile
 import time
-
-os.environ.setdefault("OEE_SEMANTIC", "off")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -226,11 +224,12 @@ def use_provider_double() -> str:
 
 
 class HardRunner(Runner):
-    """Reuses the builder Runner's engine plumbing; adds the 24 hard tests.
+    """Reuses the builder Runner's engine plumbing; adds the hard tests.
 
-    Engines are built with the stateless local embedder and the semantic layer
-    off, so the suite is offline and reproducible; point OEE_PROVIDER at a real
-    model to make the `model`-kind checks meaningful."""
+    Engines run with the semantic layer ON: the local NLI model labels
+    citations and runs the strawman check, and the local embedding model
+    feeds the dense retrieval channel. Everything stays on-machine; point
+    OEE_PROVIDER at a real model to make the `model`-kind checks meaningful."""
 
     def fresh_settings(self) -> Settings:
         s = Settings()
@@ -890,6 +889,144 @@ class HardRunner(Runner):
             "warnings": sc.get("warnings"), "reply": res["chat_reply"][:300],
         })
 
+    # ---- Category 9: NLI layer ----------------------------------------------------
+    def t91_citation_entailment_verification(self, db: str) -> dict:
+        from oee import backstop as BS
+        from oee import semantic
+        engine = self.reset(db)
+        engine.ingest(SAMPLE_DOC)
+        res = engine.ask(SAMPLE_Q)
+        cites = res["sidecar"]["citations"]
+        labels = [c.get("nli_label") for c in cites]
+        flags6 = step(res, "6.epistemic_backstop")["flags"]
+        # direct layer probe: the sample-size chunk must not entail effectiveness
+        probe = [{"chunk_id": "R1-C1",
+                  "quote": "The experiment used 50 participants.",
+                  "claim": "The method is effective."}]
+        probe_flags = BS.nli_check_citations(
+            probe, {"R1-C1": SAMPLE_DOC}, "The method is effective. [R1-C1]")
+        # orientation probe: premise=chunk, hypothesis=claim, never the reverse
+        fwd = semantic.nli("The study used 50 participants.",
+                           "The study used participants.")
+        rev = semantic.nli("The method is effective.",
+                           "The study used 50 participants.")
+        nli_live = semantic.status()["nli"] == "model"
+        return _pack_hard("9.1 Citation entailment verification", "NLI Layer", [
+            ("the sample chunk is cited and quote-verified",
+             bool(cites) and all(c["verified"] for c in cites)
+             and "50 participants" in " ".join(c["quote"] for c in cites), "engine"),
+            ("the NLI layer labels the live citation rows (no invented labels)",
+             all(l in ("entailment", "neutral", "contradiction") for l in labels)
+             if nli_live else
+             (all(l in (None, "unavailable") for l in labels)
+              and any("FALLBACK" in f for f in flags6)), "engine"),
+            ("sample size does not entail effectiveness: label is neutral/"
+             "contradiction, never entailment",
+             probe[0].get("nli_label") in ("neutral", "contradiction")
+             and any("CLAIM_UNSUPPORTED" in f for f in probe_flags), "engine"),
+            ("orientation: nli(premise=chunk, hypothesis=claim) entails; the "
+             "reverse direction does not",
+             nli_live
+             and (fwd or {}).get("label") == "entailment"
+             and (rev or {}).get("label") != "entailment", "engine"),
+            ("the reply does not assert effectiveness from the sample size",
+             not re.search(r"(?i)\b(proven|proves? that the method is|the method "
+                           r"(is|works) effective)\b", own(res)), "model"),
+        ], {
+            "labels": labels, "probe_label": probe[0].get("nli_label"),
+            "probe_flags": probe_flags, "orientation": [fwd, rev],
+            "backstop_flags": flags6, "reply": res["chat_reply"][:300],
+        })
+
+    def t92_strawman_detection(self, db: str) -> dict:
+        from oee import backstop as BS
+        from oee import semantic
+        engine = self.reset(db)
+        res = engine.ask(GROWTH_Q)
+        dl = res["sidecar"].get("dialectic") or {}
+        th, an = dl.get("thesis", ""), dl.get("antithesis", "")
+        flags6 = step(res, "6.epistemic_backstop")["flags"]
+        straw6 = [f for f in flags6 if "entailed by the thesis" in f]
+        straw_pair = BS.check_dialectic_quality({
+            "thesis": "The survey shows 70 percent support the policy, so the "
+                      "policy is popular.",
+            "antithesis": "The survey shows that 70 percent of respondents "
+                          "support the policy.",
+            "synthesis": "The policy has support."})
+        genuine_pair = BS.check_dialectic_quality({
+            "thesis": "The survey shows the policy is popular.",
+            "antithesis": "However, survey popularity is not endorsement: respondents "
+                          "faced a leading question, and the sample excludes the "
+                          "communities that bear the policy's costs.",
+            "synthesis": "Popularity and endorsement come apart under biased sampling."})
+        nli_live = semantic.status()["nli"] == "model"
+        recomputed = BS.dialectic_opposition_check(th, an)
+        return _pack_hard("9.2 Strawman detection in dialectic", "NLI Layer", [
+            ("a thesis-restating antithesis is flagged entailed (strawman)",
+             any("entailed by the thesis" in f for f in straw_pair), "engine"),
+            ("a genuine antithesis is not flagged by the strawman check",
+             not any("entailed by the thesis" in f for f in genuine_pair), "engine"),
+            ("the live turn's flag matches the recomputed NLI verdict",
+             bool(straw6) == (recomputed is not None), "engine"),
+            ("the strawman NLI check ran (no unannounced skip)",
+             nli_live and not any("FALLBACK: NLI model unavailable" in f for f in flags6)
+             if nli_live else any("FALLBACK" in f for f in flags6), "engine"),
+            ("the live antithesis passes the strawman check (genuine opposition)",
+             not straw6, "model"),
+        ], {
+            "dialectic": dl, "straw_flags": straw6,
+            "straw_pair_flags": straw_pair, "genuine_pair_flags": genuine_pair,
+            "recomputed": recomputed, "reply": res["chat_reply"][:300],
+        })
+
+    def t93_nli_fallback(self, db: str) -> dict:
+        from oee import semantic
+        engine = self.reset(db)
+        engine.ingest(SAMPLE_DOC)
+        saved_env = os.environ.get("OEE_NLI_MODEL")
+        saved_model = semantic.NLI_MODEL
+        saved_state = dict(semantic._state)
+        saved_state["notes"] = list(semantic._state["notes"])
+        os.environ["OEE_NLI_MODEL"] = "nonexistent-model-xyz"
+        semantic.NLI_MODEL = "nonexistent-model-xyz"
+        semantic._state = {"tried": False, "sim": None, "nli": None,
+                           "embed": None, "notes": []}
+        try:
+            res = engine.ask(SAMPLE_Q)
+            mid_notes = list(semantic._state["notes"])
+        finally:
+            if saved_env is None:
+                os.environ.pop("OEE_NLI_MODEL", None)
+            else:
+                os.environ["OEE_NLI_MODEL"] = saved_env
+            semantic.NLI_MODEL = saved_model
+            semantic._state = saved_state
+        gen = step(res, "5.pass2_generation")
+        flags6 = step(res, "6.epistemic_backstop")["flags"]
+        cites = res["sidecar"]["citations"]
+        labels = [c.get("nli_label") for c in cites]
+        return _pack_hard("9.3 NLI fallback (model unavailable)", "NLI Layer", [
+            ("the turn completes with the NLI model missing (no crash, no "
+             "generation error)",
+             bool(res["chat_reply"].strip()) and not any("ERROR" in f for f in gen["flags"]),
+             "engine"),
+            ("the fallback is disclosed as FALLBACK in the trace",
+             any("FALLBACK" in f for f in flags6), "engine"),
+            ("citation rows report 'unavailable', not invented labels",
+             bool(labels) and all(
+                 l in (None, "unavailable")
+                 or (l == "entailment" and c.get("nli_path") == "lexical-verbatim")
+                 for l, c in zip(labels, cites)), "engine"),
+            ("lexical citation verification still runs (quotes verified)",
+             bool(cites) and all(c["verified"] for c in cites), "engine"),
+            ("the load note records the failed NLI model",
+             any("NLI model failed to load" in n for n in mid_notes), "engine"),
+        ], {
+            "labels": labels, "backstop_flags": flags6,
+            "nli_status_note": "OEE_NLI_MODEL=nonexistent-model-xyz",
+            "reply": res["chat_reply"][:300],
+        })
+
     # ---------------------------------------------------------------------- driver
     def hard_all(self, only: str | None = None) -> dict:
         tests = [m for m in dir(self) if re.fullmatch(r"t\d{2}_.+", m)]
@@ -1061,7 +1198,7 @@ def main(argv: list[str]) -> int:
         report["model"] = f"{report['model']} (provider double: not a language model)"
     width = 78
     print("=" * width)
-    print("OPEN EPISTEMIC ENGINE - HARD TEST SUITE (24 tests)")
+    print("OPEN EPISTEMIC ENGINE - HARD TEST SUITE (27 tests)")
     print(f"provider={report['provider']} model={report['model']}")
     print("=" * width)
     for test in report["tests"]:

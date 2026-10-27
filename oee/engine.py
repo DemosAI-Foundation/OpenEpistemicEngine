@@ -23,6 +23,12 @@ from .textutil import quote_span
 
 CITATION_RE = re.compile(r"\[(R\d+-C\d+)\]")
 
+BOTTOM_STRIP_RE = re.compile(
+    r"(?m)\[(?:FACT|PREDICTION|HYPOTHETICAL|POSSIBILITY|CONSTRAINT|AUTHOR_CLAIM|"
+    r"INFERENCE|SPECULATION|R\d+-[A-Z0-9-]+)\]|^#{1,6}\s*|^\s*[-*]\s+|\*\*|__")
+BOTTOM_SENT_RE = re.compile(r"(?<=[.!?])\s+")
+BOTTOM_MAX_CHARS = 560
+
 
 class Engine:
     def __init__(self, settings: Settings | None = None):
@@ -34,6 +40,32 @@ class Engine:
         self.store = Store(self.settings.db_path)
         self.index = HybridIndex(self.store, self.embedder)
         self.ingestor = Ingestor(self.provider, self.store, self.embedder, self.settings)
+        self._ensure_vector_space()
+
+    # ---------------------------------------------------------------- reindex
+    def reindex(self) -> int:
+        """Re-embed every leaf/section with the currently active embedder. A
+        provider swap, a semantics toggle, or an OEE_EMBED_MODEL change moves
+        the dense channel to a new vector space; stored vectors from the old
+        one cannot be compared against new queries, so they are rebuilt."""
+        nodes = self.store.nodes(("leaf", "section"))
+        if not nodes:
+            self.index.refresh(force=True)
+            return 0
+        mat, mode = self.embedder.encode([n["text"] for n in nodes])
+        vectors = {n["node_id"]: [float(x) for x in mat[i]] for i, n in enumerate(nodes)}
+        modes = {n["node_id"]: mode for n in nodes}
+        self.store.save_vectors(vectors, modes)
+        self.index.refresh(force=True)
+        return len(vectors)
+
+    def _ensure_vector_space(self) -> None:
+        active_dim = self.index.target_dim
+        stored_dims = self.store.vector_dims()
+        if active_dim is None or not stored_dims:
+            return
+        if any(d != active_dim for d in stored_dims):
+            self.reindex()
 
     # ---------------------------------------------------------------- ingest
     def ingest(self, text: str, doc_id: str | None = None, label: str = ""):
@@ -112,6 +144,11 @@ class Engine:
         cards = self.index.cards()
         fallback_hit = search["channels"].get("attached_document_fallback", False)
         no_hit = not (search["leaves"] or search["sections"])
+        top_cosine = max([r["cosine"] for r in search["leaves"] + search["sections"]
+                          if r.get("cosine") is not None] or [0.0])
+        weak_grounding = (not no_hit and not fallback_hit
+                          and search["channels"].get("dense_hits", 0) > 0
+                          and top_cosine < self.settings.weak_grounding_cosine)
         retrieval_flags = []
         if no_hit:
             retrieval_flags.append(
@@ -122,10 +159,17 @@ class Engine:
                 "FALLBACK: no BM25/dense match; the attached document tree was supplied as "
                 "grounding because attaching a document is an explicit intent signal."
             )
+        elif weak_grounding:
+            retrieval_flags.append(
+                f"FALLBACK: best dense cosine {top_cosine:.4f} is below "
+                f"{self.settings.weak_grounding_cosine}; the retrieved chunks are topically "
+                "unrelated to the question. The corpus is not a source on this topic: the "
+                "grounding supports an absence verdict only, not answer content."
+            )
         trace.append({
             "step": "3.hybrid_retrieval",
-            "status": "ok" if (not no_hit and not fallback_hit)
-                     else ("flagged" if fallback_hit else "empty"),
+            "status": "ok" if (not no_hit and not fallback_hit and not weak_grounding)
+                     else ("flagged" if (fallback_hit or weak_grounding) else "empty"),
             "latency_ms": search["latency_ms"],
             "flags": retrieval_flags,
             "detail": (f"BM25 hits={search['channels']['bm25_hits']} "
@@ -153,6 +197,10 @@ class Engine:
             "latency_ms": 0.0,
             "flags": ([f"TRUNCATED: dropped {', '.join(pack['dropped_nodes'])} to fit "
                        f"{self.settings.max_context_tokens} token budget"] if pack["truncated"] else [])
+                     + ([f"TRUNCATED: the user request was clipped to fit the "
+                         f"{self.settings.max_context_tokens} token budget; only the first "
+                         f"{pack['raw_request_budget']} chars reached the model"
+                         ] if pack.get("raw_request_truncated") else [])
                      + ([f"OVER BUDGET: assembled prompt exceeds the "
                          f"{self.settings.max_context_tokens} token budget by "
                          f"{pack['budget_exceeded_tokens']} tokens after dropping leaves"
@@ -182,7 +230,7 @@ class Engine:
         t0 = time.perf_counter()
         cand = self._candidate(pack, on_delta=(delta_cb if on_event else None))
         self._finish_candidate(cand, search, has_references, retrieved_ids, chunk_texts,
-                               pack, card_ids)
+                               pack, card_ids, weak_grounding)
         gen_notes, raw_output, sidecar = cand["notes"], cand["raw"], cand["sidecar"]
         gen_tokens, model = cand["tokens"], cand["model"]
         generation_error, resp_meta = cand["error"], cand["meta"]
@@ -196,7 +244,7 @@ class Engine:
         if reason:
             alt = self._candidate(pack)
             self._finish_candidate(alt, search, has_references, retrieved_ids, chunk_texts,
-                                   pack, card_ids)
+                                   pack, card_ids, weak_grounding)
             sa, parts_a = BS.score_candidate(
                 {**sidecar, "citations": sidecar_full["citations"]},
                 bs_flags + sidecar_flags)
@@ -227,7 +275,7 @@ class Engine:
                 "the complete object again:\n- " + "\n- ".join(critic_res["violations"]))
             rep = self._candidate(pack, extra_instruction=instruction, temperature=0.05)
             self._finish_candidate(rep, search, has_references, retrieved_ids, chunk_texts,
-                                   pack, card_ids)
+                                   pack, card_ids, weak_grounding)
             sr, _ = BS.score_candidate(
                 {**rep["sidecar"], "citations": rep["full"]["citations"]},
                 rep["bs_flags"] + rep["sidecar_flags"])
@@ -395,7 +443,7 @@ class Engine:
 
     def _finish_candidate(self, cand: dict, search: dict, has_references: bool,
                           retrieved_ids: set, chunk_texts: dict, pack: dict,
-                          card_ids: set) -> None:
+                          card_ids: set, weak_grounding: bool = False) -> None:
         """Backstop + sidecar assembly for one candidate, so Best-of-2 can score
         two fully-checked payloads."""
         sidecar = cand["sidecar"]
@@ -404,9 +452,13 @@ class Engine:
             sidecar.get("citations", []), chunk_texts)
         sidecar["chat_reply"] = reply
         full = self._sidecar(sidecar, search, has_references, cand["model"],
-                             cand["tokens"], pack, cand["notes"], card_ids)
+                             cand["tokens"], pack, cand["notes"], card_ids,
+                             weak_grounding)
         cand["bs_flags"] = bs_flags
         cand["full"] = full
+        # propagate the healed bottom line into the scored candidate so Best-of-2
+        # and the critic see the payload the user will actually get.
+        sidecar["bottom_line"] = full.get("bottom_line", "")
         cand["sidecar_flags"] = BS.sidecar_backstop(
             {**sidecar, "citations": full["citations"]}, has_references, retrieved_ids)
 
@@ -438,7 +490,8 @@ class Engine:
 
     def _sidecar(self, sidecar: dict, search: dict, has_references: bool, model: str,
                  gen_tokens: int, pack: dict, gen_notes: list,
-                 card_ids: set[str] | None = None) -> dict:
+                 card_ids: set[str] | None = None,
+                 weak_grounding: bool = False) -> dict:
         card_ids = card_ids or set()
         by_id = {r["node_id"]: r for r in search["leaves"] + search["sections"]}
         omitted = sorted({n.split("'")[1] for n in gen_notes
@@ -465,7 +518,7 @@ class Engine:
                 "chunk_excerpt": quote_span((node or {}).get("text", "")),
                 "auto_derived": auto,
             }
-            for k in ("nli_label", "nli_score", "nli_hypothesis"):
+            for k in ("nli_label", "nli_score", "nli_hypothesis", "nli_path"):
                 if row.get(k) is not None:
                     row_out[k] = row[k]
             citations.append(row_out)
@@ -508,6 +561,29 @@ class Engine:
                 f"{sorted({c['chunk_id'] for c in citations})[:4]} but the model "
                 "omitted 'reference' from basis"
             )
+        if has_references and (weak_grounding or
+                               search["channels"].get("attached_document_fallback")):
+            weak_cos = max([r["cosine"] for r in search["leaves"] + search["sections"]
+                            if r.get("cosine") is not None] or [0.0])
+            if "parametric" not in basis:
+                basis = basis + ["parametric"]
+            derived_notes.append(
+                "FALLBACK: the retrieved chunks are topically unrelated to the question "
+                f"(best dense cosine {weak_cos:.4f} < {self.settings.weak_grounding_cosine}); "
+                "the corpus is not a source on this topic. basis corrected by the engine to "
+                "include 'parametric': 'reference' grounds the absence verdict only, the "
+                "answer's substantive content has no reference grounding."
+            )
+        if not has_references and "reference" in basis:
+            valid_cits = [c for c in citations
+                          if c.get("verified") or c.get("in_retrieved_set")]
+            if not valid_cits:
+                basis = [b for b in basis if b != "reference"]
+                derived_notes.append(
+                    "basis auto-corrected by the engine: 'reference' removed - every "
+                    "cited chunk ID was invented for inline prompt text (no reference "
+                    "document was ingested), so nothing in this turn is reference-grounded."
+                )
         tiers = P.CONFIDENCE_TIERS
         tier = sidecar.get("confidence_tier", tiers[2])
         tier_reported = "confidence_tier" not in omitted
@@ -531,10 +607,18 @@ class Engine:
                          "fields below are all that exists [CONSTRAINT].")
                 derived_notes.append("chat_reply and bottom_line both empty; "
                                      "placeholder reply emitted")
+        bottom_line = str(sidecar.get("bottom_line", "") or "").strip()
+        if not bottom_line and reply.strip():
+            bottom_line = _derive_bottom_line(reply)
+            derived_notes.append(
+                "bottom_line auto-derived by the engine (the model omitted it): the first "
+                "direct sentence of chat_reply, stripped of modal and citation markers. It "
+                "is the model's own words, not an invented summary."
+            )
         warnings = list(sidecar.get("warnings", [])) + derived_notes
         return {
             "chat_reply": reply,
-            "bottom_line": sidecar.get("bottom_line", ""),
+            "bottom_line": bottom_line,
             "dialectic": sidecar.get("dialectic", {}),
             "question_decomposition": sidecar.get("question_decomposition", []),
             "vocabulary_contract": sidecar.get("vocabulary_contract", []),
@@ -655,6 +739,27 @@ def _extract_reply(raw_output: str) -> str:
         return str(obj.get("chat_reply", ""))
     except Exception:
         return ""
+
+
+def _derive_bottom_line(reply: str) -> str:
+    """The model omitted bottom_line: recover it from its own direct answer, not
+    invent one. Strip modal/citation/markdown markers, take leading sentences up
+    to the 600-char limit the schema imposes on a 1-3 sentence direct answer."""
+    clean = " ".join(BOTTOM_STRIP_RE.sub(" ", reply or "").split())
+    out = ""
+    for sent in BOTTOM_SENT_RE.split(clean):
+        sent = sent.strip()
+        if not sent:
+            continue
+        cand = (out + " " + sent).strip()
+        if len(cand) > BOTTOM_MAX_CHARS:
+            break
+        out = cand
+        if len(out) >= 80:
+            break
+    if not out:
+        out = clean[:BOTTOM_MAX_CHARS].strip()
+    return (out[:BOTTOM_MAX_CHARS - 1] + "…") if len(clean) > BOTTOM_MAX_CHARS else out
 
 
 def _as_text(value) -> str:

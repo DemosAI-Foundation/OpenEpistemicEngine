@@ -9,6 +9,8 @@ from .security import strip_reference_delimiter_collisions
 from .textutil import estimate_tokens, truncate_chars
 
 FULL_VIEW_CHARS = 20000
+CHARS_PER_TOKEN = 4
+RAW_REQUEST_MIN_CHARS = 1200
 
 # Reference-tree line format contract. `render_reference_tree` emits these lines;
 # anything that reads the tree (tests, provider doubles) parses them here, so the
@@ -92,16 +94,26 @@ def assemble(case_state: dict, search: dict, cards: list[dict], sanitized: str,
         if not (search.get("leaves") or search.get("sections")) else ""
     )
 
-    def build(tree: str) -> str:
+    # The user's own request is the most important part of the prompt: it gets a
+    # char budget scaled to the token budget (4 chars/token), not a hard 1200-char
+    # clip. Only when the assembled prompt still overflows - after the reference
+    # leaves are at their floor - is the request itself shrunk, so a long message
+    # survives intact and a runaway one degrades predictably.
+    raw_budget = max(RAW_REQUEST_MIN_CHARS, max_context_tokens * CHARS_PER_TOKEN)
+    request_truncated = len(raw_request) > raw_budget
+
+    def build(tree: str, budget: int) -> str:
         return P.PASS2_USER_TEMPLATE.format(
             case_state=case_text,
             reference_tree=tree,
             sanitized_request=sanitized,
-            raw_request=truncate_chars(raw_request, 1200),
+            raw_request=truncate_chars(raw_request, budget),
         ) + no_ref_rule
 
-    user_prompt = build(tree_text)
-    while estimate_tokens(user_prompt) > max_context_tokens:
+    user_prompt = build(tree_text, raw_budget)
+    guard = 0
+    while estimate_tokens(user_prompt) > max_context_tokens and guard < 40:
+        guard += 1
         lines = tree_text.split("\n")
         leaf_idx = [i for i, ln in enumerate(lines)
                     if ln.startswith("[R") and "-C" in ln.split("]")[0] and "] (rrf " in ln]
@@ -110,7 +122,13 @@ def assemble(case_state: dict, search: dict, cards: list[dict], sanitized: str,
             over_budget.append(victim.split("]")[0].lstrip("["))
             lines.pop(leaf_idx[-1])
             tree_text = "\n".join(lines)
-            user_prompt = build(tree_text)
+            user_prompt = build(tree_text, raw_budget)
+        elif len(raw_request) > raw_budget:
+            # reference floor reached: shrink the request as a last resort, never
+            # below the floor, so the model always sees its head and tail.
+            raw_budget = max(RAW_REQUEST_MIN_CHARS, raw_budget // 2)
+            request_truncated = len(raw_request) > raw_budget
+            user_prompt = build(tree_text, raw_budget)
         else:
             break
 
@@ -129,6 +147,8 @@ def assemble(case_state: dict, search: dict, cards: list[dict], sanitized: str,
         "budget_exceeded_tokens": max(0, tokens - max_context_tokens),
         "truncated": bool(over_budget),
         "dropped_nodes": over_budget,
+        "raw_request_truncated": request_truncated,
+        "raw_request_budget": raw_budget,
         "delimiter_flags": delim_flags,
         "leaf_ids": leaf_ids,
         "section_ids": section_ids,

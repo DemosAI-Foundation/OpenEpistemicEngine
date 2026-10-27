@@ -1,8 +1,8 @@
-"""Regression harness for the 24-test hard suite (plan Phase 3).
+"""Regression harness for the 27-test hard suite (plan Phase 3).
 
 Runs the whole hard suite in-process against the in-test provider double
 (`tests/stub_provider.py`, registered as provider "stub": no network, no GPU)
-and asserts:
+with the semantic layer ON (local NLI + embedding models), and asserts:
 
   * every test executes without crashing;
   * every deterministic (`kind="engine"`) check that is currently green stays
@@ -18,8 +18,6 @@ double is a fixture, not a language model. Run `python3 run_eval.py
 import os
 
 import pytest
-
-os.environ.setdefault("OEE_SEMANTIC", "off")
 
 from evals.hard import HardRunner
 from oee.config import Settings
@@ -44,7 +42,6 @@ KNOWN_GAPS = {
     "t41_temptation_to_claim_evidence": [],
     "t42_citation_without_support": ["reply distinguishes 'states' from 'proves'"],
     "t43_out_of_domain_question": [
-        "an off-topic grounded turn is disclosed, not silent",
         "reply states the document does not address consciousness",
     ],
     "t51_one_sided_easy_question": ["antithesis is a real mathematical opposition"],
@@ -78,8 +75,10 @@ KNOWN_GAPS = {
     "t82_exact_match_required": [],
     "t83_no_relevant_chunks": [
         "reply states the document does not address quantum mechanics",
-        "the sidecar discloses the topically unrelated grounding",
     ],
+    "t91_citation_entailment_verification": [],
+    "t92_strawman_detection": [],
+    "t93_nli_fallback": [],
 }
 
 
@@ -95,8 +94,8 @@ def report():
     return rep
 
 
-def test_all_24_tests_execute(report):
-    assert report["total"] == 24
+def test_all_27_tests_execute(report):
+    assert report["total"] == 27
     for row in report["tests"]:
         assert "crashed" not in row["name"], row["evidence"]
         assert row["checks"], row["name"]
@@ -132,6 +131,8 @@ def test_deterministic_security_and_provenance_guarantees_hold(report):
             "provenance note says no references were provided",
             "retrieval reported an empty corpus",
             "no fabricated citation ids"],
+        "t43_out_of_domain_question": [
+            "an off-topic grounded turn is disclosed, not silent"],
         "t61_contradiction_across_turns": [
             "case state did not adopt the false claim",
             "turn count advanced to 2"],
@@ -164,6 +165,28 @@ def test_deterministic_security_and_provenance_guarantees_hold(report):
         "t82_exact_match_required": [
             "BM25 ranked the spec chunk", "citation quote carries the exact number",
             "reply reports 47 parameters", "no hedged or invented count"],
+        "t83_no_relevant_chunks": [
+            "the weak/irrelevant grounding is disclosed as a trace flag (FALLBACK / NO HITS)",
+            "the sidecar discloses the topically unrelated grounding"],
+        "t91_citation_entailment_verification": [
+            "the sample chunk is cited and quote-verified",
+            "the NLI layer labels the live citation rows (no invented labels)",
+            "sample size does not entail effectiveness: label is neutral/"
+            "contradiction, never entailment",
+            "orientation: nli(premise=chunk, hypothesis=claim) entails; the "
+            "reverse direction does not"],
+        "t92_strawman_detection": [
+            "a thesis-restating antithesis is flagged entailed (strawman)",
+            "a genuine antithesis is not flagged by the strawman check",
+            "the live turn's flag matches the recomputed NLI verdict",
+            "the strawman NLI check ran (no unannounced skip)"],
+        "t93_nli_fallback": [
+            "the turn completes with the NLI model missing (no crash, no "
+            "generation error)",
+            "the fallback is disclosed as FALLBACK in the trace",
+            "citation rows report 'unavailable', not invented labels",
+            "lexical citation verification still runs (quotes verified)",
+            "the load note records the failed NLI model"],
     }
     by_id = {r["id"]: {c["label"]: c["ok"] for c in r["checks"]} for r in report["tests"]}
     for test_id, labels in green.items():

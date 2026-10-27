@@ -11,7 +11,10 @@ import re
 
 SIM_MODEL = os.getenv("OEE_SEMANTIC_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 NLI_MODEL = os.getenv("OEE_NLI_MODEL", "cross-encoder/nli-deberta-v3-small")
-EMBED_MODEL = os.getenv("OEE_EMBED_MODEL", "BAAI/bge-small-en-v1.5")
+# MiniLM for retrieval, not bge: measured on the suite, bge's unrelated-pair
+# floor (0.517) sits inside its related-pair range (min 0.533), so no weak-
+# grounding threshold separates them. MiniLM: unrelated <= 0.13, related >= 0.39.
+EMBED_MODEL = os.getenv("OEE_EMBED_MODEL_HF", "sentence-transformers/all-MiniLM-L6-v2")
 MODE = os.getenv("OEE_SEMANTIC", "auto")  # auto | off | on
 
 _state: dict = {"tried": False, "sim": None, "nli": None, "embed": None,
@@ -43,8 +46,13 @@ def _load():
     except Exception as exc:
         _state["notes"].append(f"NLI model failed to load: {type(exc).__name__}")
     try:
-        _state["embed"] = SentenceTransformer(EMBED_MODEL)
-        _state["notes"].append(f"embedding model loaded: {EMBED_MODEL}")
+        if EMBED_MODEL == SIM_MODEL and _state["sim"] is not None:
+            _state["embed"] = _state["sim"]
+            _state["notes"].append(
+                f"embedding model loaded: {EMBED_MODEL} (shared with similarity)")
+        else:
+            _state["embed"] = SentenceTransformer(EMBED_MODEL)
+            _state["notes"].append(f"embedding model loaded: {EMBED_MODEL}")
     except Exception as exc:
         _state["notes"].append(f"embedding model failed to load: {type(exc).__name__}")
     return _state

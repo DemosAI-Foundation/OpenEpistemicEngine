@@ -40,6 +40,24 @@ def test_unverified_citation_flagged():
     assert any("UNVERIFIED CITATION" in f and "R1-C99" in f for f in flags)
 
 
+def test_ghost_document_citations_are_scrubbed_and_flagged():
+    reply = ("The pasted text argues X [FACT] [R1-C1], cites Y [AUTHOR_CLAIM] [R1-C2], "
+             "and the card Z [R1-CARD] [PREDICTION].")
+    out, flags = epistemic_backstop(reply, has_references=False, retrieved_ids=set())
+    assert "[R1-C1]" not in out and "[R1-C2]" not in out and "[R1-CARD]" not in out
+    assert "The pasted text argues X [FACT]" in out          # prose + modal tags kept
+    assert any(f.startswith("WARNING") and "invented reference IDs" in f
+               and "R1-CARD" in f for f in flags)
+    assert "  " not in out                                    # strip left no double space
+
+
+def test_real_reference_citations_are_not_scrubbed():
+    reply = "The reference claims 11 percent per year [AUTHOR_CLAIM] [R1-C1]."
+    out, flags = epistemic_backstop(reply, has_references=True, retrieved_ids=IDS)
+    assert "[R1-C1]" in out
+    assert not any("invented reference IDs" in f for f in flags)
+
+
 def test_paraphrased_quote_flagged():
     citations = [{"chunk_id": "R1-C1", "quote": "Panels broke down constantly outdoors in summer."}]
     _, flags = epistemic_backstop("text [R1-C1]", has_references=True,
@@ -194,6 +212,29 @@ def test_unsupported_claim_flag_names_the_citation(monkeypatch):
     rows = [{"chunk_id": "R1-C1", "claim": "The circuit cures cancer."}]
     flags = nli_check_citations(rows, {"R1-C1": "The circuit self-calibrates."})
     assert any(f.startswith("CLAIM_UNSUPPORTED: [R1-C1]") for f in flags)
+
+
+def test_missing_nli_model_discloses_fallback_on_citations(monkeypatch):
+    monkeypatch.setattr(semantic, "nli", lambda p, h: None)
+    rows = [{"chunk_id": "R1-C1", "claim": "The circuit cures cancer."}]
+    flags = nli_check_citations(rows, {"R1-C1": "The circuit self-calibrates."})
+    assert rows[0]["nli_label"] == "unavailable"
+    assert any(f.startswith("FALLBACK: NLI model unavailable") for f in flags)
+    assert not any("CLAIM_UNSUPPORTED" in f for f in flags)
+
+
+def test_missing_nli_model_discloses_skipped_strawman_check(monkeypatch):
+    monkeypatch.setattr(semantic, "nli", lambda p, h: None)
+    monkeypatch.setattr(semantic, "status",
+                        lambda: {"mode": "auto", "similarity": "lexical",
+                                 "nli": "unavailable", "embeddings": "unavailable",
+                                 "notes": []})
+    flags = check_dialectic_quality(
+        {"thesis": "The policy is popular in the survey.",
+         "antithesis": "However, the sample excludes the affected communities.",
+         "synthesis": "Popularity under a biased sample is weak evidence."})
+    assert any(f.startswith("FALLBACK: NLI model unavailable") for f in flags)
+    assert not any("DIALECTIC" in f for f in flags)
 
 
 def test_critic_does_not_demand_citations_on_a_parametric_turn():

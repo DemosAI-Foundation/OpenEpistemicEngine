@@ -61,7 +61,9 @@ def test_rrf_favour_cross_channel_consensus():
     assert fused["b"] > fused["a"] > fused["c"]
 
 
-def test_dense_channel_degrades_to_lexical_only(engine):
+def test_dense_channel_degrades_to_lexical_only(engine, monkeypatch):
+    from oee import semantic
+    monkeypatch.setattr(semantic, "embed_texts", lambda texts: None)
     engine.ingest(DOC)
     engine.embedder.fallback.encode = lambda texts: np.zeros((len(texts), 256), dtype=np.float32)
     engine.index.refresh(force=True)
@@ -73,6 +75,30 @@ def test_dense_channel_degrades_to_lexical_only(engine):
 def test_empty_corpus_search_is_safe(engine):
     res = engine.index.search("anything at all", leaf_k=4, section_k=2)
     assert res["leaves"] == [] and res["sections"] == []
+
+
+def test_stale_vector_dim_never_crashes_dense_and_reindex_realigns(engine):
+    """Stored vectors live in one vector space. When the active embedder changes
+    (semantics toggled, provider swapped), old vectors have a foreign dimension:
+    the dense matmul used to raise a core-dimension mismatch. It must degrade to
+    lexical, and reindex() must realign the space."""
+    engine.ingest(DOC)
+    engine.index.refresh(force=True)
+    active = engine.index.target_dim
+    assert active is not None
+    stale = engine.store.nodes(("leaf",))[0]["node_id"]
+    foreign = active + 64
+    engine.store.save_vectors({stale: [0.1] * foreign}, {stale: "hash-local"})
+    engine.index.refresh(force=True)
+    assert engine.index.target_dim == active
+    assert engine.index.stale_vectors >= 1
+    res = engine.index.search(QUERY, leaf_k=3, section_k=1)
+    assert res["leaves"]
+    assert stale not in [r["node_id"] for r in res["leaves"] if r["rank_dense"] is not None]
+    assert engine.reindex() >= 1
+    assert set(engine.store.vector_dims()) == {active}
+    res2 = engine.index.search(QUERY, leaf_k=3, section_k=1)
+    assert res2["channels"]["dense_hits"] > 0
 
 
 def test_index_is_current_after_ingest(engine):

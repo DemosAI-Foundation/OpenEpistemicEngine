@@ -14,8 +14,6 @@ stand-in. The offline/deterministic coverage is the pytest suite.
 import os
 import sys
 
-os.environ.setdefault("OEE_SEMANTIC", "off")
-
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from evals import hard, harness
