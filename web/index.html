@@ -43,6 +43,8 @@
       <h2>Chat</h2>
       <span class="spacer"></span>
       <button class="ghost" id="resetBtn">Reset case state</button>
+      <button class="ghost danger" id="deleteBtn" title="Delete all turn history, case state, and the job cache (keeps attached documents)">Delete case</button>
+      <button class="ghost danger" id="deleteAllBtn" title="Delete EVERYTHING: all documents, chunks, vectors, cards, turns, and case state. Irreversible.">Delete ALL</button>
     </div>
     <div class="pane-body" id="chat"></div>
   </section>
@@ -73,6 +75,10 @@
       <div class="block" id="blkSecure">
         <div class="block-head">[Phase 1: Secure Front-End]</div>
         <pre class="block-body empty">deterministic: control tokens stripped before any model call</pre>
+      </div>
+      <div class="block hidden" id="blkData">
+        <div class="block-head">[Phase 1b: Inline Data Front-End]</div>
+        <pre class="block-body empty">data channel: screened, not sanitized by S2A, not ingested</pre>
       </div>
       <div class="block" id="blkPass1Sys">
         <div class="block-head">[Pass 1: S2A System Prompt]</div>
@@ -109,9 +115,19 @@
 </main>
 
 <footer id="composer">
-  <textarea id="input" rows="3"
-    placeholder="Ask a question or paste text… (control tokens are stripped before the model sees anything)"></textarea>
+  <div id="composerStack">
+    <textarea id="input" rows="3"
+      placeholder="Ask a question… (control tokens are stripped before the model sees anything)"></textarea>
+    <div id="dataBox" class="hidden">
+      <div class="data-label">Data for this turn (not sanitized, not ingested, not persisted)
+        <a href="#" id="dataClear" class="data-clear">Clear</a>
+      </div>
+      <textarea id="dataInput" rows="6"
+        placeholder="Paste text, code, logs, tables for this turn…"></textarea>
+    </div>
+  </div>
   <div class="composer-side">
+    <button class="ghost" id="dataBtn" title="Add inline data for this turn (bypasses S2A, not ingested)">+ Data</button>
     <button class="ghost" id="attachBtn">Attach Doc</button>
     <button id="sendBtn">Send</button>
   </div>

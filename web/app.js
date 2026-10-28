@@ -1,11 +1,12 @@
 "use strict";
 
 const STEP_ORDER = [
-  "1.secure_frontend", "2.s2a_pass1", "3.hybrid_retrieval", "4.context_assembly",
-  "5.pass2_generation", "6.epistemic_backstop", "7.case_state_update",
+  "1.secure_frontend", "1b.data_frontend", "2.s2a_pass1", "3.hybrid_retrieval",
+  "4.context_assembly", "5.pass2_generation", "6.epistemic_backstop", "7.case_state_update",
 ];
 const STEP_LABEL = {
   "1.secure_frontend": "Secure Front-End",
+  "1b.data_frontend": "Data Front-End (inline)",
   "2.s2a_pass1": "S2A Pass 1",
   "3.hybrid_retrieval": "Hybrid Retrieval",
   "4.context_assembly": "Context Assembly",
@@ -224,17 +225,23 @@ function setBlock(id, text, cls) {
   block.classList.toggle("flagged", !!cls);
 }
 
-function resetTransparency(rawText) {
+function resetTransparency(rawText, dataPresent) {
   Object.keys(liveSteps).forEach((k) => delete liveSteps[k]);
   $("blkContext").querySelector("#viewFullBtn").classList.add("hidden");
   fullContext = "";
   setBlock("blkRaw", rawText);
+  $("blkData").classList.toggle("hidden", !dataPresent);
   ["blkSecure", "blkPass1Sys", "blkPass1Out", "blkPass2Sys", "blkContext"].forEach((id) => {
     const body = $(id).querySelector(".block-body");
     body.textContent = "running…";
     body.classList.add("pending");
     $(id).classList.remove("flagged");
   });
+  if (dataPresent) {
+    const body = $("blkData").querySelector(".block-body");
+    body.textContent = "running…";
+    body.classList.add("pending");
+  }
 }
 
 const LEFT_FILLERS = {
@@ -243,6 +250,14 @@ const LEFT_FILLERS = {
     setBlock("blkSecure",
       (sec.flags.length ? sec.flags.join("\n") + "\n\n" : "no control tokens found\n") +
       `clean text sent to Pass 1 (${sec.output_chars} chars):\n` + sec.output_preview);
+  },
+  "1b.data_frontend": (t) => {
+    const d = t["1b.data_frontend"];
+    setBlock("blkData",
+      (d.flags.length ? d.flags.join("\n") + "\n\n" : "no injection/control-token flags\n") +
+      `inline data passed to Pass 2 as inert <user_data> (${d.output_chars} chars of ` +
+      `${d.input_chars}; not sent to S2A, not ingested):\n` + (d.output_preview || ""),
+      d.flags.length);
   },
   "2.s2a_pass1": (t) => {
     const p1 = t["2.s2a_pass1"];
@@ -318,19 +333,21 @@ $("viewFullBtn").onclick = () => {
 };
 
 /* ------------------------------------------------------------------- trace */
-function renderPendingTrace() {
+function renderPendingTrace(dataPresent) {
   const box = $("trace");
   box.innerHTML = "";
-  STEP_ORDER.forEach((step, i) => {
-    const card = el("div", "step pending");
-    card.id = "step-" + step;
-    card.innerHTML =
-      `<div class="step-top"><span class="step-idx">${i + 1}</span>` +
-      `<span class="step-name">${STEP_LABEL[step]}</span>` +
-      `<span class="step-status s-empty">running</span></div>` +
-      `<div class="step-detail">…</div>`;
-    box.appendChild(card);
-  });
+  STEP_ORDER
+    .filter((step) => dataPresent || step !== "1b.data_frontend")
+    .forEach((step, i) => {
+      const card = el("div", "step pending");
+      card.id = "step-" + step;
+      card.innerHTML =
+        `<div class="step-top"><span class="step-idx">${i + 1}</span>` +
+        `<span class="step-name">${STEP_LABEL[step]}</span>` +
+        `<span class="step-status s-empty">running</span></div>` +
+        `<div class="step-detail">…</div>`;
+      box.appendChild(card);
+    });
 }
 
 function traceCard(s, i) {
@@ -630,7 +647,11 @@ function renderTurn(res, rawText) {
   const turn = el("div", "turn");
 
   const you = el("div", "turn-user");
-  you.innerHTML = `<div class="who2">You</div><div class="bubble user">${esc(rawText)}</div>`;
+  const dataChars = res.data_chars || (res.sidecar && res.sidecar.data_chars) || 0;
+  const dataBadge = dataChars
+    ? `<div class="data-badge" title="Inline data analyzed this turn: not sanitized by S2A, not ingested, not persisted">\u{1f4ce} inline data (${dataChars} chars)</div>`
+    : "";
+  you.innerHTML = `<div class="who2">You</div><div class="bubble user">${esc(rawText)}${dataBadge}</div>`;
   turn.appendChild(you);
 
   const asst = el("div", "turn-asst");
@@ -685,6 +706,7 @@ async function loadHistory() {
     const sc = t.sidecar || {};
     renderTurn({
       chat_reply: t.chat_reply,
+      data_chars: sc.data_chars || 0,
       sidecar: sc,
       flags: aggregateFlags(t.trace),
       trace: t.trace || [],
@@ -740,16 +762,35 @@ function stageLabel(ev, count) {
   return `pipeline \u00b7 ${count} step(s) \u00b7 ${name} ${mark}`;
 }
 
+function composerNotice(msg) {
+  const box = el("div", "composer-notice", esc(msg));
+  $("chat").appendChild(box);
+  $("chat").scrollTop = $("chat").scrollHeight;
+  setTimeout(() => box.remove(), 6000);
+}
+
 async function send() {
   const raw = $("input").value.trim();
-  if (!raw || busy) return;
+  const data = $("dataInput").value.trim();
+  if (busy) return;
+  if (!raw && !data) return;
+  if (data && !raw) {
+    composerNotice("You added data but no question. Add a question or remove the data.");
+    return;
+  }
   busy = true;
+  const dataChars = data.length;
   $("input").value = "";
+  $("dataInput").value = "";
+  $("dataBox").classList.add("hidden");
   $("sendBtn").disabled = true;
 
   const turn = el("div", "turn");
   const you = el("div", "turn-user");
-  you.innerHTML = `<div class="who2">You</div><div class="bubble user">${esc(raw)}</div>`;
+  const dataBadge = dataChars
+    ? `<div class="data-badge" title="not sanitized by S2A, not ingested, not persisted">\u{1f4ce} inline data (${dataChars} chars)</div>`
+    : "";
+  you.innerHTML = `<div class="who2">You</div><div class="bubble user">${esc(raw)}${dataBadge}</div>`;
   turn.appendChild(you);
   const asst = el("div", "turn-asst");
   asst.innerHTML = `<div class="who2">Assistant</div>
@@ -761,8 +802,8 @@ async function send() {
   turn.appendChild(asst);
   $("chat").appendChild(turn);
   $("chat").scrollTop = $("chat").scrollHeight;
-  resetTransparency(raw);
-  renderPendingTrace();
+  resetTransparency(raw, dataChars > 0);
+  renderPendingTrace(dataChars > 0);
   liveDraft = null;
   $("sidecarLivePill").textContent = "running";
   $("sidecarLivePill").classList.remove("warn", "ok");
@@ -785,7 +826,7 @@ async function send() {
     const res = await fetch("/api/ask/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: raw, session: "default" }),
+      body: JSON.stringify({ text: raw, session: "default", data: data }),
     });
     if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
     const reader = res.body.getReader();
@@ -838,7 +879,7 @@ async function send() {
   } else {
     try {
       const res2 = await api("/api/ask", { method: "POST",
-        body: { text: raw, session: "default" } });
+        body: { text: raw, session: "default", data: data } });
       await finish(res2);
     } catch (err2) {
       turn.remove();
@@ -868,6 +909,19 @@ async function send() {
 
 $("sendBtn").onclick = send;
 $("input").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); }
+});
+$("dataBtn").onclick = () => {
+  const box = $("dataBox");
+  box.classList.toggle("hidden");
+  if (!box.classList.contains("hidden")) $("dataInput").focus();
+};
+$("dataClear").onclick = (e) => {
+  e.preventDefault();
+  $("dataInput").value = "";
+  $("dataBox").classList.add("hidden");
+};
+$("dataInput").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); send(); }
 });
 
@@ -977,6 +1031,57 @@ $("resetBtn").onclick = async () => {
   await api("/api/session/reset", { method: "POST", body: { session: "default" } });
   $("chat").innerHTML = "";
   $("trace").innerHTML = `<div class="stepper-empty">case state reset</div>`;
+};
+
+$("deleteBtn").onclick = async () => {
+  const ok = confirm(
+    "Delete ALL case state, turn history, and the job cache?\n" +
+    "Attached documents are kept. This cannot be undone.");
+  if (!ok) return;
+  const res = await api("/api/session/delete", { method: "POST", body: { session: "" } });
+  $("chat").innerHTML = "";
+  $("trace").innerHTML =
+    `<div class="stepper-empty">case deleted \u00b7 ${res.turns} turns and ` +
+    `${res.case_state} case state(s) removed</div>`;
+  $("liveSidecar").innerHTML = `<div class="stepper-empty">case deleted</div>`;
+  $("sidecarLivePill").textContent = "awaiting turn";
+  $("sidecarLivePill").classList.remove("warn", "ok");
+  $("contextPill").textContent = "Context: 0/32k";
+  ["blkRaw", "blkPass1Sys", "blkPass1Out", "blkPass2Sys", "blkContext"].forEach((id) => {
+    const b = $(id).querySelector(".block-body");
+    b.textContent = "awaiting submit";
+    b.classList.add("empty");
+    $(id).classList.remove("flagged");
+  });
+  $("blkData").classList.add("hidden");
+};
+
+$("deleteAllBtn").onclick = async () => {
+  const ok = confirm(
+    "Delete the ENTIRE memory: every attached document, chunk, vector, card, all " +
+    "turns, and all case state?\nAttached documents are removed too. This cannot " +
+    "be undone.");
+  if (!ok) return;
+  const res = await api("/api/store/delete_all", { method: "POST", body: {} });
+  const d = res.deleted || {};
+  $("chat").innerHTML = "";
+  $("trace").innerHTML =
+    `<div class="stepper-empty">ALL memory deleted \u00b7 ${d.documents || 0} doc(s), ` +
+    `${d.nodes || 0} node(s), ${d.vectors || 0} vector(s), ${d.turns || 0} turn(s) removed</div>`;
+  $("liveSidecar").innerHTML = `<div class="stepper-empty">memory deleted</div>`;
+  $("sidecarLivePill").textContent = "awaiting turn";
+  $("sidecarLivePill").classList.remove("warn", "ok");
+  $("contextPill").textContent = "Context: 0/32k";
+  $("densePill").textContent = "dense: \u2026";
+  $("docList").innerHTML =
+    "<em>no documents attached — answers are parametric only</em>";
+  ["blkRaw", "blkPass1Sys", "blkPass1Out", "blkPass2Sys", "blkContext"].forEach((id) => {
+    const b = $(id).querySelector(".block-body");
+    b.textContent = "awaiting submit";
+    b.classList.add("empty");
+    $(id).classList.remove("flagged");
+  });
+  $("blkData").classList.add("hidden");
 };
 
 document.addEventListener("click", (e) => {

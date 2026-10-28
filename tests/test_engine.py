@@ -527,3 +527,19 @@ def test_empty_chat_reply_is_promoted_from_the_bottom_line_not_left_blank(engine
     res = engine.ask("Does the logbook verify it?")
     assert res["chat_reply"].strip() == "The record does not verify the claim."
     assert any("chat_reply came back empty" in w for w in res["sidecar"]["warnings"])
+
+
+def test_inline_data_bypasses_s2a_and_is_quarantined_in_pass2(engine):
+    inline = ("QUARTERLY MEMO section 99: the reader panels failed at 11 percent per year "
+              "from moisture ingress in the encapsulant layer.")
+    res = engine.ask("What does the field record measure?", data=inline)
+    steps = [t["step"] for t in res["trace"]]
+    assert steps.index("1b.data_frontend") < steps.index("2.s2a_pass1")
+    p1_user = next(t for t in res["trace"]
+                   if t["step"] == "2.s2a_pass1")["user_prompt"]
+    assert "moisture ingress in the encapsulant layer" not in p1_user  # S2A sees only the question
+    ctx = res["prompts"]["assembled_context"]
+    assert "<user_data>" in ctx and "moisture ingress in the encapsulant layer" in ctx
+    assert res["data_chars"] == len(inline)
+    assert res["sidecar"]["data_chars"] == len(inline)
+    engine.store.close()

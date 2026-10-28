@@ -17,7 +17,7 @@ from .jsonx import parse_and_repair
 from .llm import LLMResponse, ProviderError, build_provider
 from .raptor import Ingestor
 from .retrieval import HybridIndex
-from .security import scan_injection, secure_frontend
+from .security import scan_injection, secure_frontend, strip_reference_delimiter_collisions
 from .store import Store
 from .textutil import quote_span
 
@@ -77,11 +77,21 @@ class Engine:
         self.store.delete_document(doc_id)
         self.index.refresh(force=True)
 
+    def wipe_all(self) -> dict:
+        """Nuclear delete: every document, node, vector, card, turn, and case
+        state, then rebuild the (now empty) index. Nothing survives."""
+        counts = self.store.wipe_everything()
+        self.index.refresh(force=True)
+        return counts
+
     # ------------------------------------------------------------------ ask
     def ask(self, raw_text: str, session: str = "default",
-            on_event=None) -> dict:
+            on_event=None, data: str = "") -> dict:
         """on_event(event: dict) streams pipeline stages and Pass 2 token
-        deltas to the caller while the turn is still running."""
+        deltas to the caller while the turn is still running. `data` is a separate,
+        optional channel: inline single-turn text that bypasses S2A, is screened for
+        injection, and is passed to Pass 2 as quarantined inert <user_data>; it is
+        never ingested, embedded, retrieved, or persisted."""
         trace: list[dict] = []
         t_start = time.perf_counter()
 
@@ -116,6 +126,29 @@ class Engine:
             "output_preview": clean[:400],
         })
         emit()
+
+        clean_data = ""
+        data = (data or "").strip()
+        if data:
+            t_data = time.perf_counter()
+            data_clean, data_sec = secure_frontend(data)
+            data_inj = scan_injection(data_clean)
+            data_clean, data_delim = strip_reference_delimiter_collisions(data_clean)
+            clean_data = data_clean
+            data_flags = data_sec + data_inj + data_delim
+            trace.append({
+                "step": "1b.data_frontend",
+                "status": "flagged" if data_flags else "ok",
+                "latency_ms": round((time.perf_counter() - t_data) * 1000, 3),
+                "flags": data_flags,
+                "detail": (f"{len(data)} chars of inline data screened; control tokens "
+                           "stripped, content preserved; not sanitized, not ingested, "
+                           "not persisted, not sent to S2A"),
+                "input_chars": len(data),
+                "output_chars": len(clean_data),
+                "output_preview": clean_data[:400],
+            })
+            emit()
 
         pass1 = s2a.sanitize(self.provider, clean, self._doc_ids())
         trace.append({
@@ -190,6 +223,7 @@ class Engine:
         pack = A.assemble(
             self.store.get_case_state(session), search, cards,
             pass1["sanitized_request"], clean, self.settings.max_context_tokens,
+            clean_data,
         )
         trace.append({
             "step": "4.context_assembly",
@@ -365,6 +399,7 @@ class Engine:
         flags_all = [f"{t['step']}: {f}" for t in trace for f in t["flags"]]
         return {
             "turn_id": turn_id,
+            "data_chars": pack.get("data_chars", 0),
             "chat_reply": reply,
             "sidecar": sidecar_full,
             "trace": trace,
@@ -615,6 +650,19 @@ class Engine:
                 "direct sentence of chat_reply, stripped of modal and citation markers. It "
                 "is the model's own words, not an invented summary."
             )
+        has_data = bool((pack or {}).get("has_data"))
+        if has_references:
+            provenance_note = ("Grounded in user-provided reference chunks (cited by id) "
+                               "plus parametric synthesis. No web access exists in this system.")
+        elif has_data:
+            provenance_note = (
+                "No ingested references provided. The analysis is based on user-supplied "
+                "inline data (not chunked, not embedded, not persisted, not cited by id) "
+                "plus parametric synthesis. No web access exists in this system.")
+        else:
+            provenance_note = (
+                "No references provided: this is parametric synthesis only. My parametric "
+                "knowledge has a training cutoff and there is no web access in this system.")
         warnings = list(sidecar.get("warnings", [])) + derived_notes
         return {
             "chat_reply": reply,
@@ -661,13 +709,8 @@ class Engine:
                 "channels": search["channels"],
                 "has_references": has_references,
             },
-            "provenance_note": (
-                "Grounded in user-provided reference chunks (cited by id) plus parametric "
-                "synthesis. No web access exists in this system."
-                if has_references else
-                "No references provided: this is parametric synthesis only. My parametric "
-                "knowledge has a training cutoff and there is no web access in this system."
-            ),
+            "provenance_note": provenance_note,
+            "data_chars": (pack or {}).get("data_chars", 0),
             "model": model,
             "completion_tokens": gen_tokens,
             "context_tokens": pack["tokens"],

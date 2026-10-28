@@ -121,3 +121,35 @@ def test_parametric_turn_states_the_rule_without_forcing_the_boilerplate_opener(
     assert 'MUST open with the exact phrase' not in pack["user_prompt"]
     assert "Parametric synthesis suggests" not in pack["user_prompt"]
     assert "training-cutoff" in pack["user_prompt"]
+
+
+def test_user_data_block_is_quarantined_and_ordered_before_the_request():
+    pack = A.assemble({"rolling_summary": "", "established_claims": [], "open_questions": []},
+                      {"leaves": [], "sections": [], "channels": {}},
+                      [], "q", "the question", 4096,
+                      data="Section A: off-by-one at index 9. Section B: leak in the loop.")
+    up = pack["user_prompt"]
+    assert "<user_data>" in up and "</user_data>" in up
+    assert "off-by-one at index 9" in up
+    assert "Do not cite it with [R#-C#] tags" in up          # quarantine preamble
+    assert up.index("</reference_tree>") < up.index("<user_data>") < up.index("<sanitized_request>")
+    assert pack["has_data"] is True and pack["data_chars"] > 0
+
+
+def test_empty_data_omits_the_user_data_block_entirely():
+    pack = A.assemble({"rolling_summary": "", "established_claims": [], "open_questions": []},
+                      {"leaves": [], "sections": [], "channels": {}},
+                      [], "q", "the question", 4096, data="   ")
+    assert "<user_data>" not in pack["user_prompt"]
+    assert pack["has_data"] is False and pack["data_chars"] == 0
+
+
+def test_oversized_inline_data_is_truncated_to_the_budget_and_flagged():
+    huge = "log line " * 50000  # ~450k chars
+    pack = A.assemble({"rolling_summary": "", "established_claims": [], "open_questions": []},
+                      {"leaves": [], "sections": [], "channels": {}},
+                      [], "q", "analyze this log", 1500, data=huge)
+    assert pack["data_truncated"] is True
+    assert pack["data_budget"] >= A.RAW_REQUEST_MIN_CHARS
+    assert "log line" in pack["user_prompt"]  # head survives
+    assert len(pack["user_prompt"]) < len(huge)

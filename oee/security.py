@@ -93,7 +93,9 @@ def strip_reference_delimiter_collisions(text: str) -> tuple[str, list]:
     flags = []
     out = text
     for token in ("</reference_tree>", "<reference_tree>", "</case_state>",
-                  "<case_state>", "</sanitized_request>", "<sanitized_request>"):
+                  "<case_state>", "</sanitized_request>", "<sanitized_request>",
+                  "</user_data>", "<user_data>", "</raw_request_for_reference_only>",
+                  "<raw_request_for_reference_only>"):
         n = out.count(token)
         if n:
             flags.append(

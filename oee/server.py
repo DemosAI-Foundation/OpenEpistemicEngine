@@ -24,6 +24,7 @@ WEB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 class AskBody(BaseModel):
     text: str = Field(min_length=1, max_length=200000)
     session: str = "default"
+    data: str = Field(default="", max_length=400000)
 
 
 class DocBody(BaseModel):
@@ -70,19 +71,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/ask")
     def ask(body: AskBody):
-        result = engine.ask(body.text, session=body.session)
+        if (body.data or "").strip() and not (body.text or "").strip():
+            raise HTTPException(422, "Data requires a question. Add a question to the chat box.")
+        result = engine.ask(body.text, session=body.session, data=body.data)
         return result
 
     @app.post("/api/ask/stream")
     def ask_stream(body: AskBody):
         """Server-sent events: pipeline stage events, Pass 2 token deltas,
         then the complete turn under `result`. The UI renders live."""
+        if (body.data or "").strip() and not (body.text or "").strip():
+            raise HTTPException(422, "Data requires a question. Add a question to the chat box.")
         events: queue.Queue = queue.Queue()
 
         def worker():
             try:
                 result = engine.ask(body.text, session=body.session,
-                                    on_event=events.put)
+                                    on_event=events.put, data=body.data)
                 events.put({"type": "result", "data": result})
             except Exception as exc:  # never leave the stream hanging
                 events.put({"type": "error",
@@ -114,6 +119,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "user_constraints": [], "user_pressure": [], "turn_count": 0,
         })
         return {"ok": True, "session": body.session}
+
+    @app.post("/api/session/delete")
+    def delete_case(body: SessionBody):
+        """Delete the conversation case: turn history + case state, and clear the
+        in-memory job cache. Wipes every case (session) when session is empty.
+        Ingested reference documents (Attach Doc) are left intact."""
+        session = (body.session or "").strip()
+        counts = engine.store.wipe_conversation(session or None)
+        with JOBS_LOCK:
+            JOBS.clear()
+        return {"ok": True, "session": session or "ALL",
+                "scope": "all" if not session else "session", **counts}
+
+    @app.post("/api/store/delete_all")
+    def delete_all():
+        """Delete the whole memory: every document, chunk, vector, card, turn, and
+        case state, plus the job cache. Irreversible."""
+        counts = engine.wipe_all()
+        with JOBS_LOCK:
+            JOBS.clear()
+        return {"ok": True, "scope": "everything", "deleted": counts}
 
     @app.post("/api/documents")
     def ingest(body: DocBody):

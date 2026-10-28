@@ -241,6 +241,40 @@ class Store:
             (session, json.dumps(state), time.time()),
         )
 
+    def wipe_conversation(self, session: str | None = None) -> dict:
+        """Delete turn history and case state - the conversation 'case'. Pass a
+        session to wipe just that one, None to wipe every case. Leaves ingested
+        reference documents untouched (those are Attach Doc data, not cases)."""
+        with self._lock:
+            if session is None:
+                turns = self.db.execute("DELETE FROM turns").rowcount
+                states = self.db.execute("DELETE FROM case_state").rowcount
+            else:
+                turns = self.db.execute(
+                    "DELETE FROM turns WHERE session=?", (session,)).rowcount
+                states = self.db.execute(
+                    "DELETE FROM case_state WHERE session=?", (session,)).rowcount
+            self.db.commit()
+        return {"turns": int(turns), "case_state": int(states)}
+
+    def wipe_everything(self) -> dict:
+        """Nuclear wipe of the entire store: turn history, case state, and every
+        ingested reference (documents, nodes - including cards - vectors, jobs).
+        Nothing survives. Only tables that exist are touched, so schema drift
+        across store versions never raises."""
+        wanted = ("turns", "case_state", "vectors", "nodes", "documents", "jobs")
+        with self._lock:
+            existing = {r["name"] for r in self.db.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+            counts: dict[str, int] = {}
+            for table in wanted:
+                counts[table] = (
+                    int(self.db.execute(f"DELETE FROM {table}").rowcount)
+                    if table in existing else 0
+                )
+            self.db.commit()
+        return counts
+
     def stats(self) -> dict:
         with self._lock:
             counts = {}
