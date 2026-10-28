@@ -184,18 +184,6 @@ The 125B MoE is powerful but slow and expensive. Verification tasks (semantic si
 
 All three load lazily, run on CPU, cache locally, and have deterministic fallbacks. The engine never breaks because a small model is missing.
 
-### Why Phatic Bypass Uses LLM Classification, Not Regex?
-
-**Source:** Internal design decision after regex failure analysis.
-
-Initial proposal: regex-based phatic detection ("thank you", "hello") to bypass the analytical pipeline. Rejected because:
-
-- Context-dependent meanings: "yes" can be phatic acknowledgment or epistemic pushback.
-- False positives: "yes, the evidence is weak" is analytical, not phatic.
-- Case state corruption: bypassing turns means the rolling summary misses user agreement/disagreement.
-
-Correct fix: S2A (Pass 1) classifies `input_type` as `analytical`, `phatic`, `follow_up`, or `distress`. The LLM does semantic classification; the engine does structural routing. This is consistent with the engine's principle: **LLMs for semantics, deterministic tools for structure**.
-
 ---
 
 ## Pipeline Architecture (The 7-Step Trace)
@@ -309,7 +297,6 @@ Fields the model omitted show as `⚠️ UNDECLARED`. Fields the engine inferred
 - Schema degradation (via L0–L4 reconstruction leveling)
 - Scope creep and grant-proposal bloat
 - Prompt directive leakage
-- Phatic input misrouted to analytical pipeline
 - Ghost document citations (inventing chunk IDs for inline text)
 
 ---
