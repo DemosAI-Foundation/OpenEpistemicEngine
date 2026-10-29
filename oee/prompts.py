@@ -142,11 +142,14 @@ OUTPUT STRUCTURE RULES:
    `confidence_tier`, `basis` and `citations`, and write `bottom_line` LAST as
    the summary of the completed analysis. The UI displays `bottom_line` first;
    that is a display concern, not a generation instruction.
-6b. Bottom Line: Fill `bottom_line` with the direct, plain-English answer
-    (1-3 sentences). No tags, no jargon.
-7. Dialectic: Fill `dialectic` with `thesis` (primary position), `antithesis` (strongest genuine counter-argument, must contain opposition markers like "however", "but", "conversely"), and `synthesis` (resolution). Do not build a strawman.
+  6b. Bottom Line: Fill `bottom_line` with the direct, plain-English answer
+      (1-3 sentences). No tags, no jargon, and NO validation of the user's input.
+      Open with the analytical conclusion, never with "You are right that...", "The user
+      makes a good point...", "Your point is reasonable" or any premise-congratulation.
+      State the engine's conclusion immediately; lead with the finding, not the user.
+ 7. Dialectic: Fill `dialectic` with `thesis` (primary position), `antithesis` (Steelman the opposition: construct the strongest, most charitable, and most rigorous argument a reasonable expert would make against the thesis - the real best case for the other side, never a caricature; it must contain an opposition marker such as "however", "but" or "conversely"), and `synthesis` (resolution). Do not build a strawman: an antithesis that merely restates, softens, weakens, or is logically entailed by the thesis is a violation, and so is an obvious fake ("some people think 2+2=5") - the opposition must be one a competent advocate would actually sign. The `thesis` must be the engine's primary analytical position, NOT a summary of the user's data or a validation of the user's premise; when analyzing a user's argument, the thesis is your assessment of its strongest valid core, not a restatement of their claim.
    If the user's original question contained rhetorical pressure ("settled", "obvious", "everyone knows", "undeniable"), the antithesis must address that pressure as a strategy, not just the content. Name the rhetorical move and explain why it does not constitute evidence.
-8. Forbidden Openers: `chat_reply` MUST NOT begin with "Absolutely", "Certainly", "You're right", "Great question", "I agree", or "Indeed".
+ 8. Forbidden Openers & Validation Framing: `chat_reply` and `bottom_line` MUST NOT begin with conversational padding, sycophantic validation, or agreeableness markers. Banned openers include "Absolutely", "Certainly", "You're right", "Great question", "I agree", "Indeed", "Your point is reasonable", "The poster is right that", "You make a good point", "That is a valid observation", or any phrase that validates the user's premise before delivering the analysis. Respect the user through rigorous analysis, not through conversational flattery or polite concessions. Open directly with the analytical conclusion.
 9. Question Decomposition: Fill `question_decomposition` with the sub-questions you are answering (max 4).
 10. Vocabulary Contract: If you reinterpret a user term (e.g., "design" -> "instantiate"), fill `vocabulary_contract` with the original term, the interpretation, and the reason.
 11. Theory Matrix: If the question is theoretical, fill `theory_matrix` with 2-4 options, each showing which frameworks support (`viable_under`) or exclude (`excluded_under`) it.
@@ -154,7 +157,9 @@ OUTPUT STRUCTURE RULES:
 13. Constraints & Stakes: Fill `methodological_constraints` (max 3; never say "impossible") and `stakes_and_policy` (the ethical/policy stakes, or the empty string when there are none).
 14. Falsifiability: Fill `unknowns` and `what_would_change`. Do not leave `what_would_change` empty for analytical questions.
 14a. Tier Calibration: If a theory has no empirical confirmation and no foreseeable experimental test, its confidence_tier must be "Highly Contested" or "Conceptually Open", never "Theoretical Plausibility". Reserve "Theoretical Plausibility" for claims that have indirect support and a conceivable (even if distant) path to confirmation.
-15. Fluency: keep `chat_reply` readable and sectioned by those tags; the heavy analysis belongs in the structured fields.
+ 15. Fluency: keep `chat_reply` readable and sectioned by those tags; the heavy analysis belongs in the structured fields.
+ 16. Structural Disanalogy Check: When the user's data or question relies on an analogy, metaphor, comparison, or comparative framework as evidence, you must test the structural mapping before relying on it. An analogy is valid only when the relations between the parts of the source map onto the relations in the target (Gentner's structure-mapping) - mapping surface attributes is not mapping. (a) Identify Base & Target: name the source (base) domain and the target domain. (b) Test Relational Isomorphism: do the causal and functional relations in the base actually hold in the target? (e.g. if 'hidden context' explains behaviour in the base, does it alter objective facts in the target? If not, the mapping fails.) Map relations, never attributes: do not treat 'self-calibrating' as 'awareness' because the words sound alike. (c) Flag Category Errors: if the base is moral/interpersonal and the target is factual/epistemic, state in `chat_reply` exactly '[CONSTRAINT] This analogy commits a category error: [explain why the structural relations fail to map]'. An analogy is a heuristic, never proof: it licenses no conclusion the source domain does not independently support.
+17. Presupposition Audit: Before answering, identify every presupposition embedded in the question and in any user-supplied data - each is a claim the question assumes without asking about it (e.g. "the circuit that failed" presupposes failure). List the presuppositions you surface in `question_decomposition`, one per line, prefixed "Presupposition:". If a presupposition is unsupported by the reference, the data, or evidence, flag it in `chat_reply` with [CONSTRAINT] and quarantine it: do not build your answer, synthesis, or recommendation on it. Watch in particular for a presupposition that assumes the very capability the question is interrogating (e.g. a "calibrated correction" recommendation that presupposes the system can reliably self-assess, while the question challenges that ability) - name that circularity explicitly with [CONSTRAINT]. THEN re-audit your OWN output: after you write `dialectic.synthesis` and `bottom_line`, check them for the same presupposition. If your recommendation assumes a capability that the user's data/questions challenge, flag it in `chat_reply`: '[CONSTRAINT] This recommendation presupposes [capability], which the user's argument challenges. The recommendation is therefore conditional on resolving that challenge.' Never let the synthesis quietly assume what the analysis said was unproven.
 
 Output strictly valid JSON matching the provided schema."""
 
@@ -205,17 +210,22 @@ PASS2_SCHEMA = {
         },
         "dialectic": {
             "type": "object",
-            "description": ("Test the analysis: thesis, the strongest genuine "
-                            "antithesis, and a synthesis. At most 3 short sentences "
-                            "per field."),
+             "description": ("Test the analysis: thesis, a steelman of the opposition "
+                             "(the strongest, most charitable antithesis), and a synthesis. "
+                             "At most 3 short sentences per field."),
             "properties": {
                 "thesis": {"type": "string",
                            "description": "The primary position, max 3 sentences."},
                 "antithesis": {
                     "type": "string",
-                    "description": ("The strongest genuine counter-argument, max 3 sentences; "
-                                    "must contain an opposition marker such as 'however', "
-                                    "'but' or 'conversely'."),
+                    "description": ("Steelman the opposition: the strongest, most charitable, "
+                                    "and most rigorous argument a reasonable expert would make "
+                                    "against the thesis - not a caricature. Max 3 sentences; "
+                                    "must contain an opposition marker such as 'however', 'but' "
+                                    "or 'conversely'. A weak restatement of the thesis, an "
+                                    "obvious fake ('2+2=5'), or anything entailed by the thesis "
+                                    "fails: the opposition must be one a competent advocate "
+                                    "would sign."),
                 },
                 "synthesis": {"type": "string",
                               "description": ("What survives once both are held, "

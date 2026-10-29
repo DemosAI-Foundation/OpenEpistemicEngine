@@ -482,10 +482,12 @@ class Engine:
         """Backstop + sidecar assembly for one candidate, so Best-of-2 can score
         two fully-checked payloads."""
         sidecar = cand["sidecar"]
-        reply, bs_flags = BS.epistemic_backstop(
+        reply, bs_flags, bl_scrubbed = BS.epistemic_backstop(
             sidecar.get("chat_reply", ""), has_references, retrieved_ids,
-            sidecar.get("citations", []), chunk_texts)
+            sidecar.get("citations", []), chunk_texts,
+            bottom_line=sidecar.get("bottom_line", ""))
         sidecar["chat_reply"] = reply
+        sidecar["bottom_line"] = bl_scrubbed
         full = self._sidecar(sidecar, search, has_references, cand["model"],
                              cand["tokens"], pack, cand["notes"], card_ids,
                              weak_grounding)

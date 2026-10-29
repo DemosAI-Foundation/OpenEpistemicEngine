@@ -20,8 +20,11 @@ def epistemic_backstop(chat_reply: str, has_references: bool,
                        retrieved_ids: set[str] | None = None,
                        citations: list[dict] | None = None,
                        chunk_texts: dict[str, str] | None = None,
-                       rewrite: bool = True) -> tuple[str, list]:
-    """Strips banned phrases and checks provenance rules."""
+                       rewrite: bool = True,
+                       bottom_line: str = "") -> tuple[str, list, str]:
+    """Strips banned phrases and checks provenance rules. Returns the cleaned
+    chat_reply, the flag list, and the cleaned bottom_line: validation-first
+    framing is severed from the summary the user reads first."""
     flags: list[str] = []
 
     chat_reply, opener_flags = scrub_sycophantic_openers(chat_reply)
@@ -100,13 +103,58 @@ def epistemic_backstop(chat_reply: str, has_references: bool,
         )
 
     chat_reply = re.sub(r"\s{2,}", " ", chat_reply).strip()
-    return chat_reply, flags
+
+    # Sever validation-first framing from the bottom line: strip the congratulatory
+    # opener and promote the conclusion. Deterministic - RLHF agreeableness is not
+    # reliably curbed by prompt instructions alone, so the summary gets a guillotine.
+    if bottom_line:
+        m = VALIDATION_OPENER_RE.match(bottom_line)
+        if m:
+            flags.append(
+                f"SCRUBBED: removed validation-first opener "
+                f"('{m.group(0).strip()}') from bottom_line")
+            bottom_line = bottom_line[m.end():].strip()
+            if bottom_line:
+                bottom_line = bottom_line[0].upper() + bottom_line[1:]
+            bottom_line = re.sub(r"\s{2,}", " ", bottom_line).strip()
+
+    return chat_reply, flags, bottom_line
 
 
 
 FORBIDDEN_OPENERS = re.compile(
     r"^\s*(?:absolutely|certainly|of course|you'?re right|great question|"
     r"good question|i agree|indeed|well said|exactly right)[,!:!?\s]+",
+    re.IGNORECASE)
+
+# Validation-first framing: a phrase that congratulates the user's premise before
+# delivering the analysis. Respect is shown by rigor, not by conversational padding.
+VALIDATION_OPENER_RE = re.compile(
+    r"^\s*(?:your (?:point|take|framing|argument|concern|observation)\s+"
+    r"(?:is|seems|sounds|reads)\s+(?:reasonable|valid|strong|well[- ]taken|fair|good|"
+    r"correct|spot[- ]on)|your (?:point|take|argument)\s+(?:is\s+)?valid|"
+    r"the (?:poster|user|author|question|framing)\s+is\s+"
+    r"(?:right|correct)\s+(?:that|in\s+saying|to\s+say|in\s+noting)?|"
+    r"the (?:poster|user|author)\s+is\s+(?:right|correct)\b|"
+    r"you\s+(?:make|raise|have)\s+a\s+(?:good|valid|fair|strong|compelling)\s+"
+    r"(?:point|case|argument|critique|observation|question)|"
+    r"that(?:'s| is)\s+a\s+(?:valid|fair|good|strong|reasonable|good)\s+"
+    r"(?:point|observation|critique|concern|question)|"
+    r"i\s+agree\s+(?:with|that)|you\s+are\s+(?:right|correct)\s+(?:that|to\s+say|in)|"
+    r"you'?re\s+(?:right|correct)\s+(?:that|to\s+say|in)|"
+    r"fair\s+point|good\s+question|great\s+question|well[- ]?posed|"
+    r"absolutely|certainly|of\s+course|indeed|exactly\s+right)[,.!?:\s]+",
+    re.IGNORECASE)
+
+BOTTOM_VALIDATION_OPENER = re.compile(
+    r"^\s*(?:your (?:point|take|framing|argument|concern)\s+\w+|"
+    r"you(?:'re| are) (?:right|correct|making a|raise a|make a|spot[- ]on)|"
+    r"you make a (?:good|strong|fair|valid) case|you (?:make|raise) a (?:good|strong|fair)|"
+    r"fair point|good question|great question|"
+    r"that(?:'s| is) (?:a )?(?:good|strong|fair|valid|reasonable|well)|"
+    r"this is (?:a )?(?:good|strong|fair|valid|reasonable)|"
+    r"agreed|well[- ]?posed|nice (?:point|question)|i (?:agree|appreciate|think)|"
+    r"absolutely|certainly|of course)[,.!?:\s]",
     re.IGNORECASE)
 
 OPPOSITION_MARKERS = re.compile(
@@ -173,6 +221,77 @@ def check_dialectic_quality(dialectic) -> list[str]:
                          "check is skipped - only the opposition-marker rules apply.")
         elif straw:
             flags.append(f"DIALECTIC WEAK: {straw}.")
+    return flags
+
+
+CAPABILITY_DENIAL_RE = re.compile(
+    r"(?i)\b(cannot reliably|cannot|can't|can not|is not able|are not able|is unable"
+    r"|are unable|not reliably|is unreliable|are unreliable|fails to|fail to"
+    r"|lacks? the (?:ability|capacity|means)|without the (?:ability|capacity)"
+    r"|no reliable|should not be able)\b")
+
+_AFFIRM_SPLITS = [
+    (r"(?i)\bcannot reliably\b", "can reliably"),
+    (r"(?i)\bshould not be able to\b", "should be able to"),
+    (r"(?i)\bshould not be able\b", "should be able"),
+    (r"(?i)\bcannot\b", "can"), (r"(?i)\bcan not\b", "can"), (r"(?i)\bcan't\b", "can"),
+    (r"(?i)\bis not able to\b", "is able to"), (r"(?i)\bare not able to\b", "are able to"),
+    (r"(?i)\bis unable to\b", "is able to"), (r"(?i)\bare unable to\b", "are able to"),
+    (r"(?i)\bnot reliably\b", "reliably"), (r"(?i)\bis unreliable\b", "is reliable"),
+    (r"(?i)\bare unreliable\b", "are reliable"), (r"(?i)\bno reliable\b", "reliable"),
+    (r"(?i)\bfails? to\b", ""),
+    (r"(?i)\blacks? the (ability|capacity|means)\b", r"has the \1"),
+    (r"(?i)\bwithout the (ability|capacity)\b", r"with the \1"),
+]
+
+
+def _affirm_capability(text: str) -> str:
+    out = text
+    for pat, rep in _AFFIRM_SPLITS:
+        out = re.sub(pat, rep, out)
+    return " ".join(out.split())
+
+
+def self_referential_consistency_check(sidecar: dict) -> list[str]:
+    """Self-undermining-output guard. Compares what the payload declares impossible
+    (methodological_constraints, stakes_and_policy) and what it flagged as a
+    presupposition (Rule 17, in question_decomposition) against what the synthesis
+    and bottom_line actually prescribe. NLI decides; when the model is unavailable
+    the check is skipped, never guessed (no false positives)."""
+    flags: list[str] = []
+    dialectic = sidecar.get("dialectic")
+    synth = (dialectic.get("synthesis") if isinstance(dialectic, dict) else "") or ""
+    prescriptive = " ".join(x for x in (synth, sidecar.get("bottom_line") or "")
+                            if x.strip()).strip()
+    if not prescriptive:
+        return flags
+    limits = [c for c in (list(sidecar.get("methodological_constraints") or [])
+                          + [sidecar.get("stakes_and_policy") or ""])
+              if CAPABILITY_DENIAL_RE.search(c)]
+    for sent in limits:
+        cap = _affirm_capability(sent)
+        if cap.strip().lower() == sent.strip().lower():
+            continue
+        res = semantic.nli(prescriptive, cap)
+        if res and res["label"] == "entailment" and res["score"] >= 0.6:
+            flags.append(
+                "SELF-CONTRADICTION: synthesis prescribes a capability the constraints "
+                f"declare unreliable - constraints say '{sent[:140]}' while the synthesis "
+                "assumes it.")
+            break
+    for item in (sidecar.get("question_decomposition") or []):
+        text = str(item).strip()
+        if not text.lower().startswith("presupposition:"):
+            continue
+        claim = text.split(":", 1)[1].strip()
+        if len(claim) < 12:
+            continue
+        res = semantic.nli(prescriptive, claim)
+        if res and res["label"] == "entailment" and res["score"] >= 0.6:
+            flags.append(
+                "ASSUMPTION CONFLICT: the analysis assumes the very premise the "
+                f"question/data questions - it builds on the presupposition '{claim[:140]}'.")
+            break
     return flags
 
 
@@ -258,6 +377,9 @@ def critic(sidecar: dict) -> dict:
         severity = "high"
     elif len(bottom) > 600:
         violations.append("bottom_line is over 600 chars: it must be 1-3 sentences")
+    if bottom and BOTTOM_VALIDATION_OPENER.match(bottom):
+        violations.append("bottom_line opens by validating the user (rule 6b); it must lead "
+                          "with the analytical conclusion")
     if not reply:
         violations.append("chat_reply is empty")
         severity = "high"
@@ -289,6 +411,9 @@ def critic(sidecar: dict) -> dict:
             "chat_reply cites the reference but never uses [AUTHOR_CLAIM]: sentences "
             "reporting what the source authors assert must carry [AUTHOR_CLAIM] under "
             "modality rule 3. Add the tags; change nothing else.")
+        severity = "high"
+    for f in self_referential_consistency_check(sidecar):
+        violations.append(f)
         severity = "high"
     return {"passed": not violations, "severity": severity, "violations": violations}
 
