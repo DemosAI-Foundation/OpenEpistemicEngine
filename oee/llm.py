@@ -474,6 +474,7 @@ class OpenAICompatProvider(ProviderBase):
             meta={"budget_retries": retries, "max_tokens_used": payload["max_tokens"],
                   "response_format": _effective_mode(payload),
                   "response_format_fallbacks": fmt_fallbacks,
+                  "finish_reason": _finish_reason(data),
                   "tool_calls_used": 1 if (data.get("choices") and (
                       data["choices"][0].get("message") or {}).get("tool_calls")) else 0},
         )

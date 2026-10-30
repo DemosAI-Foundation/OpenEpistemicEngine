@@ -1,6 +1,6 @@
 from oee import semantic
 from oee.backstop import (check_dialectic_quality, claim_sentences, clean_hypothesis,
-                          critic, epistemic_backstop,
+                          critic, epistemic_backstop, restore_modal_tags,
                           nli_check_citations, score_candidate, scrub_sycophantic_openers,
                           self_referential_consistency_check, sidecar_backstop)
 
@@ -399,3 +399,23 @@ def test_critic_accepts_bottom_line_that_leads_with_the_finding():
     }
     res = critic(sidecar)
     assert not any("rule 6b" in v for v in res["violations"]), res["violations"]
+
+
+def test_restore_modal_tags_rebrackets_bare_and_is_idempotent():
+    out, n = restore_modal_tags(
+        "the poster FACT is right, AUTHOR_CLAIM, and PRESUPPOSITION here [CONSTRAINT]")
+    assert out == ("the poster [FACT] is right, [AUTHOR_CLAIM], and [PRESUPPOSITION] "
+                   "here [CONSTRAINT]")
+    assert n == 3
+    out2, n2 = restore_modal_tags(out)
+    assert out2 == out and n2 == 0
+
+
+def test_restore_modal_tags_handles_multiword_tag():
+    out, n = restore_modal_tags("INFERRED ATTRIBUTION: he values X")
+    assert out == "[INFERRED ATTRIBUTION]: he values X" and n == 1
+
+
+def test_restore_modal_tags_ignores_prose_words():
+    out, n = restore_modal_tags("the factory manufactured a contract")
+    assert out == "the factory manufactured a contract" and n == 0

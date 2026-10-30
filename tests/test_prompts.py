@@ -91,11 +91,12 @@ def test_simplify_bottom_prompt_is_8th_grade_dejargonized_and_not_robotic():
 
 def test_simplify_whole_prompt_is_8th_grade_non_agreeable_and_not_robotic():
     s = P.SIMPLIFY_WHOLE_SYSTEM
-    for probe in ("8th grade reader", "academic jargon and abstract nouns",
+    for probe in ("8th grade reader", "common words and active voice",
+                  "academic jargon and abstract nouns",
                   "caveats, uncertainty, citations, and disagreement",
-                  "more agreeable", "define it briefly", "Do not add new claims",
-                  "See Spot Run"):
+                  "more agreeable", "Do not add new claims", "See Spot Run"):
         assert probe in s
+    assert "9th-10th" not in s and "define it briefly" not in s
 
 
 def test_simplify_prompts_share_the_epistemic_guard():

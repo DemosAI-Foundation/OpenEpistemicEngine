@@ -775,9 +775,17 @@ class Engine:
                  if whole else "Rewrite the direct bottom-line verdict below.")
         system = P.SIMPLIFY_WHOLE_SYSTEM if whole else P.SIMPLIFY_BOTTOM_SYSTEM
         resp = self.provider.chat(system, f"{scope}\n\n{text}",
-                                  schema=None, kind="simplify", temperature=0.3)
-        return {"simplified": (resp.text or "").strip(), "whole": whole,
-                "source_chars": len(text)}
+                                  schema=None, kind="simplify", temperature=0.3,
+                                  max_tokens=self.settings.pass2_max_tokens)
+        raw = (resp.text or "").strip()
+        cleaned, restored = BS.restore_modal_tags(raw)
+        truncated = (resp.meta or {}).get("finish_reason") == "length"
+        out = {"simplified": cleaned, "whole": whole, "source_chars": len(text),
+               "tags_restored": restored, "truncated": truncated}
+        if truncated:
+            out["note"] = ("the rewrite hit the output limit and is incomplete; "
+                           "shorten the source text or raise OEE_PASS2_MAX_TOKENS")
+        return out
 
     def status(self) -> dict:
         health = self.provider.health()

@@ -578,3 +578,34 @@ def test_simplify_selects_the_prompt_by_scope(engine, monkeypatch):
     engine.simplify("full answer [FACT]", whole=True)
     assert seen["system"] == P.SIMPLIFY_WHOLE_SYSTEM
     engine.store.close()
+
+
+def test_simplify_passes_a_real_budget_and_rebrackets_tags(engine, monkeypatch):
+    from oee.llm import LLMResponse
+    seen = {}
+
+    def fake_chat(system, user, schema=None, kind="generic", temperature=None,
+                  max_tokens=None):
+        seen["max_tokens"] = max_tokens
+        return LLMResponse(
+            text="AI over-corrects FACT and the AUTHOR_CLAIM is weak",
+            model="s", endpoint="x", latency_ms=1, prompt_tokens=0,
+            completion_tokens=0, kind=kind, meta={"finish_reason": "stop"})
+
+    monkeypatch.setattr(engine.provider, "chat", fake_chat)
+    out = engine.simplify("text", whole=True)
+    assert seen["max_tokens"] == engine.settings.pass2_max_tokens
+    assert "[FACT]" in out["simplified"] and "[AUTHOR_CLAIM]" in out["simplified"]
+    assert out["tags_restored"] == 2 and out["truncated"] is False
+    engine.store.close()
+
+
+def test_simplify_flags_truncation(engine, monkeypatch):
+    from oee.llm import LLMResponse
+    monkeypatch.setattr(engine.provider, "chat",
+        lambda *a, **k: LLMResponse(text="partial rewrite", model="s", endpoint="x",
+            latency_ms=1, prompt_tokens=0, completion_tokens=0, kind="simplify",
+            meta={"finish_reason": "length"}))
+    out = engine.simplify("text", whole=True)
+    assert out["truncated"] is True and "note" in out
+    engine.store.close()

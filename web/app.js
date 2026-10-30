@@ -706,9 +706,12 @@ async function doSimplify(scope, text, btn) {
   try {
     const r = await api("/api/simplify",
       { method: "POST", body: { text, whole: scope === "whole" } });
+    const note = r.truncated
+      ? `<div class="muted simplify-warn">\u26a0 ${esc(r.note || "the rewrite is incomplete (hit the output limit).")}</div>`
+      : "";
     body.innerHTML = `<div class="bl-label">${simplifyLabel(scope)}` +
       ` \u00b7 plain-language view \u00b7 never used as context</div>` +
-      `<div class="simplify-body">${renderMarkdown(r.simplified || "(the model returned nothing)")}</div>`;
+      `<div class="simplify-body">${renderMarkdown(r.simplified || "(the model returned nothing)")}</div>` + note;
     attachCiteHandlers(ph);
   } catch (e) {
     body.innerHTML = `<div class="bl-label">${simplifyLabel(scope)}</div>` +

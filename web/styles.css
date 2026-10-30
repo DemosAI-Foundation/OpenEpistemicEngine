@@ -321,6 +321,7 @@ button.ghost.danger:hover { background: rgba(224,101,90,.12); border-color: #e06
 .simplify-bubble { border-left: 3px solid var(--accent); }
 .simplify-turn .bl-label { margin-bottom: 5px; }
 .simplify-body p:last-child { margin-bottom: 0; }
+.simplify-warn { margin-top: 6px; color: var(--warn); font-size: 12px; }
 
 /* ------------------------------------------------------------ day theme (opt-in) */
 html[data-theme="day"] {

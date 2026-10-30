@@ -502,7 +502,6 @@ so, although, whereas) so the reasoning reads as one flow, not a list of short s
 SIMPLIFY_WHOLE_SYSTEM = """Rewrite the whole answer for an 8th grade reader.
 Use common words and active voice. Avoid academic jargon and abstract nouns. Keep all
 caveats, uncertainty, citations, and disagreement. Do not make the answer more
-agreeable. Do not remove a technical term that is necessary; define it briefly instead.
-Do not add new claims. Do not write in a choppy, robotic, or overly simplistic
+agreeable. Do not add new claims. Do not write in a choppy, robotic, or overly simplistic
 "See Spot Run" style: vary sentence length and use connectives so the prose flows.
 """ + _SIMPLIFY_GUARD

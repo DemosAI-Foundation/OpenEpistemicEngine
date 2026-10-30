@@ -7,6 +7,7 @@ import re
 
 from . import lexicon as lx
 from . import semantic
+from .prompts import MODAL_TAGS
 from .security import REDACTION
 
 LLM_ISMS = list(lx.LLM_ISMS)
@@ -14,6 +15,25 @@ LLM_ISMS = list(lx.LLM_ISMS)
 MODAL_TAG_RE = re.compile(
     r"\[(FACT|PREDICTION|HYPOTHETICAL|POSSIBILITY|CONSTRAINT|PRESUPPOSITION|"
     r"AUTHOR_CLAIM|INFERRED ATTRIBUTION|INFERRED VALUE)\]")
+
+# Modal tags a rewrite emitted WITHOUT their [ ] brackets (the model copies the
+# answer and drops the brackets, silently disabling the tag colouring). Longest
+# first so "INFERRED ATTRIBUTION" matches before "INFERRED".
+_BARE_TAG_RE = re.compile(
+    r"(?<!\[)\b(" + "|".join(sorted(MODAL_TAGS, key=len, reverse=True)) + r")\b(?!\])")
+
+
+def restore_modal_tags(text: str) -> tuple[str, int]:
+    """Re-bracket bare modal tags. Idempotent: already-bracketed tags are left
+    untouched. Returns (fixed_text, n_tags_restored)."""
+    n = 0
+
+    def sub(m):
+        nonlocal n
+        n += 1
+        return "[" + m.group(0) + "]"
+
+    return _BARE_TAG_RE.sub(sub, text or ""), n
 CITATION_RE = re.compile(r"\[(R\d+-C\d+|R\d+-S\d+)\]")
 CARD_CITATION_RE = re.compile(r"\[R\d+-CARD[0-9]*\]")
 
