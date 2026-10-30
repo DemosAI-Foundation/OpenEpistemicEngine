@@ -258,3 +258,18 @@ def test_live_sidecar_marks_draft_and_verified_states():
         assert f'data-f="{field}"' in js
     assert ".sidecar-state.streaming" in css and ".sidecar-state.complete" in css
     assert "field-changed" in css
+
+
+def test_simplify_endpoint_is_display_only(client):
+    _, before = client("GET", "/api/turns?session=default&limit=50")
+    status, body = client("POST", "/api/simplify",
+                          {"text": "The study [FACT] measured drift.", "whole": False})
+    assert status == 200
+    assert body["simplified"].startswith("SIMPLIFIED(") and body["whole"] is False
+    _, after = client("GET", "/api/turns?session=default&limit=50")
+    assert after == before  # no turn added: never becomes context
+
+
+def test_simplify_endpoint_validates_input(client):
+    status, _ = client("POST", "/api/simplify", {"text": "", "whole": True})
+    assert status == 422

@@ -363,12 +363,12 @@ def test_missing_bottom_line_is_derived_from_the_reply_not_left_blank(engine):
     engine.store.close()
 
 
-def test_derived_bottom_line_stays_under_the_char_cap():
+def test_derived_bottom_line_finishes_without_an_ellipsis():
     from oee import engine as E
     long_reply = ("The record " + "measures drift under stress across many long clauses " * 60)
     bl = E._derive_bottom_line(long_reply + " [FACT]")
     assert len(bl) <= 600
-    assert bl.endswith("…")
+    assert not bl.endswith("…")
 
 
 def test_hallucinated_citations_drop_reference_from_basis(engine):
@@ -542,4 +542,39 @@ def test_inline_data_bypasses_s2a_and_is_quarantined_in_pass2(engine):
     assert "<user_data>" in ctx and "moisture ingress in the encapsulant layer" in ctx
     assert res["data_chars"] == len(inline)
     assert res["sidecar"]["data_chars"] == len(inline)
+    engine.store.close()
+
+
+def test_simplify_is_display_only_and_writes_nothing(engine):
+    before = len(engine.store.turns("default", 50))
+    out = engine.simplify("The 1998 study measured [FACT] drift, not ingress.", whole=False)
+    assert out["simplified"].startswith("SIMPLIFIED(")
+    assert out["whole"] is False and out["source_chars"] > 0
+    assert len(engine.store.turns("default", 50)) == before  # never stored → never context
+    engine.store.close()
+
+
+def test_simplify_empty_is_a_noop(engine):
+    out = engine.simplify("   ")
+    assert out["simplified"] == "" and out["source_chars"] == 0
+    engine.store.close()
+
+
+def test_simplify_selects_the_prompt_by_scope(engine, monkeypatch):
+    from oee import prompts as P
+    from oee.llm import LLMResponse
+    seen = {}
+
+    def fake_chat(system, user, schema=None, kind="generic", temperature=None,
+                  max_tokens=None):
+        seen["system"] = system
+        seen["kind"] = kind
+        return LLMResponse(text="ok", model="stub-v1", endpoint="x", latency_ms=1,
+                           prompt_tokens=0, completion_tokens=0, kind=kind)
+
+    monkeypatch.setattr(engine.provider, "chat", fake_chat)
+    engine.simplify("verdict [FACT]", whole=False)
+    assert seen["system"] == P.SIMPLIFY_BOTTOM_SYSTEM and seen["kind"] == "simplify"
+    engine.simplify("full answer [FACT]", whole=True)
+    assert seen["system"] == P.SIMPLIFY_WHOLE_SYSTEM
     engine.store.close()

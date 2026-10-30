@@ -105,6 +105,24 @@ def test_conclusion_led_bottom_line_is_left_untouched():
     assert not any("bottom_line" in f for f in flags)
 
 
+def test_scrubs_poster_strongest_point_opener():
+    _, flags, bl = epistemic_backstop(
+        "The claim is blanket [FACT].", has_references=False,
+        bottom_line="The poster's strongest point is that correction is paternalistic; "
+                    "the claim is blanket, not domain-scoped.")
+    assert not bl.lower().startswith("the poster")
+    assert "paternalistic" in bl and bl[0].isupper()
+    assert any(f.startswith("SCRUBBED") and "bottom_line" in f for f in flags)
+
+
+def test_scrubs_core_argument_is_sound_opener():
+    _, flags, bl = epistemic_backstop(
+        "The claim is blanket [FACT].", has_references=False,
+        bottom_line="The core argument is sound, so the recommendation is conditional.")
+    assert bl.startswith("So the recommendation")
+    assert any(f.startswith("SCRUBBED") and "bottom_line" in f for f in flags)
+
+
 def test_sidecar_consistency_rules():
     assert sidecar_backstop({"basis": ["parametric"], "citations": [{"chunk_id": "R1-C1"}]},
                             has_references=True, retrieved_ids=IDS)

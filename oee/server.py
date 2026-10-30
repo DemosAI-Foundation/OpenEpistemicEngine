@@ -36,6 +36,11 @@ class SessionBody(BaseModel):
     session: str = "default"
 
 
+class SimplifyBody(BaseModel):
+    text: str = Field(min_length=1, max_length=200000)
+    whole: bool = False
+
+
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
 
@@ -111,6 +116,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/turns")
     def turns(session: str = "default", limit: int = 50):
         return {"turns": engine.history(session, limit)}
+
+    @app.post("/api/simplify")
+    def simplify(body: SimplifyBody):
+        """Display-only rewrite. Writes nothing to the store, so the output can
+        never become context for a later turn."""
+        return engine.simplify(body.text, whole=body.whole)
 
     @app.post("/api/session/reset")
     def reset(body: SessionBody):

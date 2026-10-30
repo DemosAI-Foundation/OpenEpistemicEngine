@@ -59,6 +59,13 @@ def _message_text(data: dict, expect_tool: bool) -> str:
     return reasoning if isinstance(reasoning, str) else ""
 
 
+def _finish_reason(data: dict) -> str:
+    try:
+        return data["choices"][0].get("finish_reason") or ""
+    except (KeyError, IndexError, TypeError):
+        return ""
+
+
 def _can_downgrade(payload: dict) -> bool:
     return "tools" in payload or "response_format" in payload
 

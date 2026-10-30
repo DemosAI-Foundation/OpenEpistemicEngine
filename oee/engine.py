@@ -671,6 +671,7 @@ class Engine:
             "bottom_line": bottom_line,
             "dialectic": sidecar.get("dialectic", {}),
             "question_decomposition": sidecar.get("question_decomposition", []),
+            "presupposition_audit": sidecar.get("presupposition_audit", []),
             "vocabulary_contract": sidecar.get("vocabulary_contract", []),
             "theory_matrix": sidecar.get("theory_matrix", []),
             "claim_typology": sidecar.get("claim_typology", []),
@@ -761,6 +762,23 @@ class Engine:
     def history(self, session: str = "default", limit: int = 50) -> list[dict]:
         return self.store.turns(session, limit)
 
+    def simplify(self, text: str, whole: bool = False) -> dict:
+        """Display-only plain-language rewrite. It performs NO write: the result is
+        never stored, never enters case state, and is never sent back as a turn, so
+        it can never be used as context. The guarantee is structural - this path
+        touches no store."""
+        text = (text or "").strip()
+        if not text:
+            return {"simplified": "", "whole": whole, "source_chars": 0,
+                    "note": "nothing to simplify"}
+        scope = ("Rewrite the whole answer below."
+                 if whole else "Rewrite the direct bottom-line verdict below.")
+        system = P.SIMPLIFY_WHOLE_SYSTEM if whole else P.SIMPLIFY_BOTTOM_SYSTEM
+        resp = self.provider.chat(system, f"{scope}\n\n{text}",
+                                  schema=None, kind="simplify", temperature=0.3)
+        return {"simplified": (resp.text or "").strip(), "whole": whole,
+                "source_chars": len(text)}
+
     def status(self) -> dict:
         health = self.provider.health()
         return {
@@ -789,7 +807,8 @@ def _extract_reply(raw_output: str) -> str:
 def _derive_bottom_line(reply: str) -> str:
     """The model omitted bottom_line: recover it from its own direct answer, not
     invent one. Strip modal/citation/markdown markers, take leading sentences up
-    to the 600-char limit the schema imposes on a 1-3 sentence direct answer."""
+    to the concise-answer size. A longer answer is left to finish in peace - no
+    ellipsis is appended; the UI shows the full text."""
     clean = " ".join(BOTTOM_STRIP_RE.sub(" ", reply or "").split())
     out = ""
     for sent in BOTTOM_SENT_RE.split(clean):
@@ -804,7 +823,7 @@ def _derive_bottom_line(reply: str) -> str:
             break
     if not out:
         out = clean[:BOTTOM_MAX_CHARS].strip()
-    return (out[:BOTTOM_MAX_CHARS - 1] + "…") if len(clean) > BOTTOM_MAX_CHARS else out
+    return out
 
 
 def _as_text(value) -> str:

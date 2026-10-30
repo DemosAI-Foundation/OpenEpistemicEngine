@@ -11,7 +11,9 @@ from .security import REDACTION
 
 LLM_ISMS = list(lx.LLM_ISMS)
 
-MODAL_TAG_RE = re.compile(r"\[(FACT|PREDICTION|HYPOTHETICAL|POSSIBILITY|CONSTRAINT|AUTHOR_CLAIM)\]")
+MODAL_TAG_RE = re.compile(
+    r"\[(FACT|PREDICTION|HYPOTHETICAL|POSSIBILITY|CONSTRAINT|PRESUPPOSITION|"
+    r"AUTHOR_CLAIM|INFERRED ATTRIBUTION|INFERRED VALUE)\]")
 CITATION_RE = re.compile(r"\[(R\d+-C\d+|R\d+-S\d+)\]")
 CARD_CITATION_RE = re.compile(r"\[R\d+-CARD[0-9]*\]")
 
@@ -99,7 +101,8 @@ def epistemic_backstop(chat_reply: str, has_references: bool,
     if not MODAL_TAG_RE.search(chat_reply):
         flags.append(
             "POLICY: chat_reply contains no modal tags; rule 3 requires [FACT]/"
-            "[PREDICTION]/[HYPOTHETICAL]/[POSSIBILITY]/[CONSTRAINT]/[AUTHOR_CLAIM]."
+            "[PREDICTION]/[HYPOTHETICAL]/[POSSIBILITY]/[CONSTRAINT]/[PRESUPPOSITION]/"
+            "[AUTHOR_CLAIM]."
         )
 
     chat_reply = re.sub(r"\s{2,}", " ", chat_reply).strip()
@@ -136,6 +139,9 @@ VALIDATION_OPENER_RE = re.compile(
     r"the (?:poster|user|author|question|framing)\s+is\s+"
     r"(?:right|correct)\s+(?:that|in\s+saying|to\s+say|in\s+noting)?|"
     r"the (?:poster|user|author)\s+is\s+(?:right|correct)\b|"
+    r"the (?:poster|user|author|argument|case|point)\W{0,2}s\s+strongest\s+point\s+is|"
+    r"the (?:core|main|central|underlying|basic)\s+(?:argument|case|point|claim)\s+is\s+"
+    r"(?:sound|valid|strong|correct|reasonable)|"
     r"you\s+(?:make|raise|have)\s+a\s+(?:good|valid|fair|strong|compelling)\s+"
     r"(?:point|case|argument|critique|observation|question)|"
     r"that(?:'s| is)\s+a\s+(?:valid|fair|good|strong|reasonable|good)\s+"
@@ -279,11 +285,14 @@ def self_referential_consistency_check(sidecar: dict) -> list[str]:
                 f"declare unreliable - constraints say '{sent[:140]}' while the synthesis "
                 "assumes it.")
             break
-    for item in (sidecar.get("question_decomposition") or []):
+    claims = [str(e.get("presupposition", "")).strip()
+              for e in (sidecar.get("presupposition_audit") or [])
+              if isinstance(e, dict) and str(e.get("presupposition", "")).strip()]
+    for item in (sidecar.get("question_decomposition") or []):  # legacy shape
         text = str(item).strip()
-        if not text.lower().startswith("presupposition:"):
-            continue
-        claim = text.split(":", 1)[1].strip()
+        if text.lower().startswith("presupposition:"):
+            claims.append(text.split(":", 1)[1].strip())
+    for claim in claims:
         if len(claim) < 12:
             continue
         res = semantic.nli(prescriptive, claim)
@@ -297,7 +306,8 @@ def self_referential_consistency_check(sidecar: dict) -> list[str]:
 
 MARKER_NOISE_RE = re.compile(
     r"\[(?:R\d+-[A-Z0-9-]+|FACT|PREDICTION|HYPOTHETICAL|POSSIBILITY|CONSTRAINT|"
-    r"AUTHOR_CLAIM|INFERENCE|SPECULATION)\]")
+    r"PRESUPPOSITION|AUTHOR_CLAIM|INFERENCE|SPECULATION|INFERRED ATTRIBUTION|"
+    r"INFERRED VALUE)\]")
 
 
 def clean_hypothesis(text: str) -> str:
@@ -375,8 +385,6 @@ def critic(sidecar: dict) -> dict:
     if not bottom:
         violations.append("bottom_line is empty: the answer has no plain-language direct answer")
         severity = "high"
-    elif len(bottom) > 600:
-        violations.append("bottom_line is over 600 chars: it must be 1-3 sentences")
     if bottom and BOTTOM_VALIDATION_OPENER.match(bottom):
         violations.append("bottom_line opens by validating the user (rule 6b); it must lead "
                           "with the analytical conclusion")

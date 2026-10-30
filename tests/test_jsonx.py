@@ -1,6 +1,6 @@
 import pytest
 
-from oee.jsonx import coerce, extract_json, parse_and_repair, validate
+from oee.jsonx import coerce, extract_json, normalise_dialectic, parse_and_repair, validate
 from oee.prompts import PASS1_SCHEMA, PASS2_SCHEMA
 
 
@@ -155,3 +155,68 @@ def test_citation_container_with_id_list_is_recovered():
     obj = parse_and_repair(raw, PASS2_SCHEMA, notes)
     assert [c["chunk_id"] for c in obj["citations"]] == ["R1-C1", "R1-C2"]
     assert obj["citations"][0]["quote"] == ""
+
+
+def test_normalise_dialectic_defaults_warrant_on_prose():
+    notes: list[str] = []
+    d = normalise_dialectic("Thesis: A. Antithesis: B. Synthesis: C.", notes)
+    assert d["thesis"] and d["antithesis"] and d["synthesis"]
+    assert d["warrant"] == ""
+
+
+def test_normalise_dialectic_defaults_warrant_on_dict():
+    d = normalise_dialectic({"thesis": "A", "antithesis": "B", "synthesis": "C"}, [])
+    assert d["warrant"] == ""
+    d2 = normalise_dialectic({"thesis": "A", "antithesis": "B", "synthesis": "C",
+                              "warrant": "W"}, [])
+    assert d2["warrant"] == "W"
+
+
+FULL = ('{"question_decomposition": ["q1"], "vocabulary_contract": [], '
+        '"chat_reply": "The analysis text is long and detailed [FACT].", '
+        '"dialectic": {"thesis": "T", "antithesis": "A", "synthesis": "S", '
+        '"warrant": "W"}, "confidence_tier": "Highly Contested", '
+        '"basis": ["inference"], "citations": [], "bottom_line": "Verdict."}')
+
+
+def test_balanced_json_is_parsed_normally():
+    assert extract_json(FULL)["bottom_line"] == "Verdict."
+
+
+def test_truncated_mid_string_recovers_early_fields():
+    frag = FULL[: FULL.index("detailed") + 15]  # cut inside chat_reply string
+    rec = extract_json(frag)
+    assert rec["question_decomposition"] == ["q1"]
+    assert rec["chat_reply"].startswith("The analysis text is long")
+    assert "bottom_line" not in rec
+
+
+def test_truncated_mid_dialectic_keeps_chat_reply_and_thesis():
+    frag = FULL[: FULL.index('"synthesis"') - 1]  # cut inside antithesis value
+    rec = extract_json(frag)
+    assert rec["chat_reply"].startswith("The analysis")
+    assert rec["dialectic"]["thesis"] == "T"
+    assert "synthesis" not in rec["dialectic"]
+
+
+def test_truncated_after_dangling_key_is_recoverable():
+    frag = FULL[: FULL.index("citations")] + '"what_would_change":'
+    rec = extract_json(frag)
+    assert rec["chat_reply"].startswith("The analysis")
+    assert "what_would_change" not in rec
+
+
+def test_non_json_still_raises():
+    with pytest.raises(ValueError):
+        extract_json("no json here at all")
+
+
+def test_presupposition_audit_normalises_drifted_keys():
+    notes: list[str] = []
+    raw = '{"presuppositions": [{"premise": "the AI can self-assess", '
+    raw += '"status": "load-bearing", "if_false": "the engine must intervene"}]}'
+    obj = parse_and_repair(raw, PASS2_SCHEMA, notes)
+    pa = obj["presupposition_audit"]
+    assert pa[0]["presupposition"] == "the AI can self-assess"
+    assert pa[0]["verdict"] == "load-bearing"
+    assert pa[0]["counterfactual"] == "the engine must intervene"

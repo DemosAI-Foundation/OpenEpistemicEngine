@@ -876,3 +876,253 @@ INFO:     127.0.0.1:59132 - "GET /api/documents HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59132 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:59132 - "POST /api/session/delete HTTP/1.1" 200 OK
 INFO:     127.0.0.1:44990 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60666 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [49913]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11700.38it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10806.38it/s]
+INFO:     Started server process [136240]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:49512 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49522 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50694 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50694 - "GET /static/styles.css HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50698 - "GET /static/app.js HTTP/1.1" 304 Not Modified
+INFO:     127.0.0.1:50698 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50698 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50698 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50698 - "POST /api/session/delete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50710 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50710 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50718 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50718 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50718 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50718 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50718 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34866 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [136240]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11640.80it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10205.59it/s]
+INFO:     Started server process [155780]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:58308 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44060 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44060 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44072 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44072 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44072 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44072 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44072 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44072 - "POST /api/session/delete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48234 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [155780]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11458.63it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10630.42it/s]
+INFO:     Started server process [172469]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:60642 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60702 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60702 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60718 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60718 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60718 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:60718 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60718 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60396 - "POST /api/session/delete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60408 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [172469]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11440.12it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10154.31it/s]
+INFO:     Started server process [191926]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:49598 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [191926]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 9740.56it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10614.69it/s]
+INFO:     Started server process [199929]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [199929]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10237.28it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 9926.02it/s]
+INFO:     Started server process [209181]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:45188 - "POST /api/ask HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47180 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47180 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47194 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47194 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47194 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:47194 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47194 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47194 - "POST /api/session/reset HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47194 - "POST /api/session/delete HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50366 - "POST /api/ask/stream HTTP/1.1" 200 OK
+INFO:     127.0.0.1:37236 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [209181]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10045.65it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 11101.31it/s]
+INFO:     Started server process [217044]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:48178 - "GET /api/turns?session=e2e-fix&limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48188 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:48196 - "GET /api/turns?session=e2e-fix&limit=50 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46108 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46124 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46108 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46124 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46124 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:46124 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46124 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46138 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [217044]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10436.87it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10980.94it/s]
+INFO:     Started server process [220670]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:39302 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57982 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40352 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40352 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40366 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40366 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40366 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40366 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40366 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44700 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50218 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50218 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50222 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50222 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50222 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:50222 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50222 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58136 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [220670]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 10933.72it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10413.55it/s]
+INFO:     Started server process [224995]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [224995]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11754.18it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10643.15it/s]
+INFO:     Started server process [225882]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:40764 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47770 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47770 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47786 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47786 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47786 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:47786 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47786 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47786 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     127.0.0.1:34690 - "POST /api/simplify HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [225882]
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 11758.02it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+/home/bb/.local/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/106 [00:00<?, ?it/s]Loading weights: 100%|██████████| 106/106 [00:00<00:00, 10546.95it/s]
+INFO:     Started server process [228272]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8086 (Press CTRL+C to quit)
+[oee] explicit provider=openai | model=strata | base_url=http://127.0.0.1:8082 | window=32768
+INFO:     127.0.0.1:43696 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43696 - "GET /static/styles.css HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43704 - "GET /static/app.js HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43704 - "GET /api/status HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43704 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43704 - "GET /api/documents HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43704 - "GET /api/turns?session=default&limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47726 - "POST /api/simplify HTTP/1.1" 200 OK

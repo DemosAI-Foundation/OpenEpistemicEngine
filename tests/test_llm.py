@@ -1,7 +1,7 @@
 import json
 
 from oee.config import Settings
-from oee.llm import OpenAICompatProvider
+from oee.llm import OpenAICompatProvider, _finish_reason
 from oee.prompts import PASS2_SCHEMA
 
 BODY = json.dumps({"choices": [{"message": {"content": '{"a": 1}'}}],
@@ -191,3 +191,10 @@ def test_tool_rejection_is_memoised_for_later_calls(monkeypatch):
     assert "<response_contract>" in seen[2]["messages"][1]["content"]
     assert first.meta["response_format_fallbacks"]
     assert second.meta["response_format_fallbacks"] == []
+
+
+def test_finish_reason_reads_length_and_tolerates_missing():
+    assert _finish_reason({"choices": [{"finish_reason": "length"}]}) == "length"
+    assert _finish_reason({"choices": [{"finish_reason": "stop"}]}) == "stop"
+    assert _finish_reason({"choices": []}) == ""
+    assert _finish_reason({}) == ""

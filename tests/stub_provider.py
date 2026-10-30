@@ -47,6 +47,13 @@ class StubProvider(ProviderBase):
     def chat(self, system, user, schema=None, kind="generic", temperature=None,
              max_tokens=None) -> LLMResponse:
         start = time.perf_counter()
+        if kind == "simplify":
+            text = "SIMPLIFIED(" + " ".join(user.split())[:120] + ")"
+            return LLMResponse(
+                text=text, model="stub-v1", endpoint="in-process",
+                latency_ms=(time.perf_counter() - start) * 1000,
+                prompt_tokens=len(user) // 4, completion_tokens=len(text) // 4,
+                kind=kind, system=system, user=user, meta={"note": "stub simplify"})
         handler = {
             "pass1": self._pass1,
             "section": self._section,

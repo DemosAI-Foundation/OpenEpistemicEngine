@@ -108,7 +108,7 @@ class Settings:
     wiring: str = ""
 
     max_tokens: int = int(os.getenv("OEE_MAX_TOKENS", "1600"))
-    pass2_max_tokens: int = int(os.getenv("OEE_PASS2_MAX_TOKENS", "4000"))
+    pass2_max_tokens: int = int(os.getenv("OEE_PASS2_MAX_TOKENS", "6000"))
     temperature: float = float(os.getenv("OEE_TEMPERATURE", "0.2"))
     structured_outputs: str = os.getenv("OEE_STRUCTURED_OUTPUTS", "tool")
     best_of: str = os.getenv("OEE_BEST_OF", "auto")

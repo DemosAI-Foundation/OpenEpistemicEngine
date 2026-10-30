@@ -19,7 +19,17 @@ const TAG_NOTE = {
   FACT: "states a fact", PREDICTION: "predicts a future outcome",
   HYPOTHETICAL: "reasons hypothetically", POSSIBILITY: "flags a possibility",
   CONSTRAINT: "states a limit on the claim", AUTHOR_CLAIM: "reports the author's claim, not a fact",
+  PRESUPPOSITION: "the source's unverified assumption, quarantined by the analysis",
+  "INFERRED ATTRIBUTION": "an attribution with no verbatim quote; cannot anchor a counter-argument",
+  "INFERRED VALUE": "a value inferred beyond what the source stated",
 };
+
+const MODAL_TAG_NAMES = ["FACT", "PREDICTION", "HYPOTHETICAL", "POSSIBILITY", "CONSTRAINT",
+  "PRESUPPOSITION", "AUTHOR_CLAIM", "INFERRED ATTRIBUTION", "INFERRED VALUE"];
+const MODAL_TAG_SPLIT = new RegExp(
+  "\\[(" + MODAL_TAG_NAMES.join("|") + ")\\]", "g");
+// CSS-safe class suffix (multi-word tags carry a space).
+const tagClass = (tag) => String(tag).replace(/[^a-z0-9]+/gi, "_");
 
 const CRITICAL_MARKS = ["BLOCKED", "QUARANTINED", "SCRUBBED", "UNVERIFIED",
   "QUOTE MISMATCH", "ERROR", "FALLBACK", "DEGRADED", "INCONSISTENT", "INJECTION",
@@ -34,9 +44,25 @@ const splitFlags = (flags) => {
 
 function renderBottomLine(text) {
   if (!text) return "";
-  return `<div class="bottom-line"><div class="bl-label">Bottom line</div>` +
-    `<div class="bl-body">${renderMarkdown(text)}</div></div>`;
+  const long = String(text).length > 320;
+  const wrap = long ? " bl-long bl-clamped" : "";
+  const toggle = long
+    ? `<button class="bl-toggle" type="button" aria-expanded="false">show full</button>`
+    : "";
+  return `<div class="bottom-line${wrap}"><div class="bl-label">Bottom line</div>` +
+    `<div class="bl-body">${renderMarkdown(text)}</div>${toggle}</div>`;
 }
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest && e.target.closest(".bl-toggle");
+  if (!btn) return;
+  const box = btn.closest(".bottom-line");
+  if (!box) return;
+  const open = box.classList.toggle("bl-open");
+  box.classList.toggle("bl-clamped", !open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  btn.textContent = open ? "collapse" : "show full";
+});
 
 function renderDialectic(d) {
   if (!d || (!d.thesis && !d.antithesis && !d.synthesis)) return "";
@@ -46,7 +72,22 @@ function renderDialectic(d) {
   return `<div class="dialectic">` +
     block("Thesis", d.thesis, "d-thesis") +
     block("Antithesis", d.antithesis, "d-antithesis") +
-    block("Synthesis", d.synthesis, "d-synthesis") + `</div>`;
+    block("Synthesis", d.synthesis, "d-synthesis") +
+    (d.warrant ? block("Warrant", d.warrant, "d-warrant") : "") + `</div>`;
+}
+
+function renderPresuppositionAudit(list) {
+  if (!list || !list.length) return "";
+  const rows = list.map((e) => {
+    const p = esc(e.presupposition || e.premise || "");
+    const v = esc(e.verdict || "");
+    const load = (e.verdict || "").toLowerCase() === "load-bearing" ? " pa-load" : "";
+    const cf = e.counterfactual
+      ? `<div class="pa-cf">If false: ${esc(e.counterfactual)}</div>` : "";
+    return `<div class="pa-item${load}"><span class="pa-v">${v || "?"}</span> ${p}${cf}</div>`;
+  }).join("");
+  return `<div class="presupposition-audit"><div class="d-label">Presupposition audit</div>` +
+    `${rows}</div>`;
 }
 
 function rowsTable(rows, cols) {
@@ -60,8 +101,7 @@ function rowsTable(rows, cols) {
 }
 
 function renderReply(text) {
-  const parts = String(text).split(
-    /\[(FACT|PREDICTION|HYPOTHETICAL|POSSIBILITY|CONSTRAINT|AUTHOR_CLAIM)\]/g);
+  const parts = String(text).split(MODAL_TAG_SPLIT);
   const secs = [];
   let cur = { tag: null, text: parts.shift() || "" };
   for (let i = 0; i < parts.length; i += 2) {
@@ -72,9 +112,9 @@ function renderReply(text) {
   const many = secs.length > 1;
   return secs.map((sec) => {
     const head = sec.tag
-      ? `<div class="sec-head"><span class="tag-badge t-${sec.tag}" title="${TAG_NOTE[sec.tag]}">${sec.tag}</span></div>`
+      ? `<div class="sec-head"><span class="tag-badge t-${tagClass(sec.tag)}" title="${TAG_NOTE[sec.tag]}">${sec.tag}</span></div>`
       : (many ? `<div class="sec-head"><span class="sec-label">Answer</span></div>` : "");
-    return `<div class="sec ${sec.tag ? "sec-" + sec.tag : ""}">${head}` +
+    return `<div class="sec ${sec.tag ? "sec-" + tagClass(sec.tag) : ""}">${head}` +
       `<div class="sec-body">${renderMarkdown(sec.text)}</div></div>`;
   }).join("");
 }
@@ -430,11 +470,10 @@ function inline(text) {
   let s = esc(text);
   s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
   s = s.replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
-  s = s.replace(/\[FACT\]|\[PREDICTION\]|\[HYPOTHETICAL\]|\[POSSIBILITY\]|\[CONSTRAINT\]|\[AUTHOR_CLAIM\]/g,
-    (m) => {
-      const tag = m.slice(1, -1);
-      return `<span class="tag-badge t-${tag}" title="${TAG_NOTE[tag]}">${tag}</span>`;
-    });
+  s = s.replace(MODAL_TAG_SPLIT, (m) => {
+    const tag = m.slice(1, -1);
+    return `<span class="tag-badge t-${tagClass(tag)}" title="${TAG_NOTE[tag]}">${tag}</span>`;
+  });
   s = s.replace(/\[(R\d+-[CS]\d+)\]/g, (m, id) => {
     const row = citationMap.get(id);
     const bad = row && !row.verified ? " unverified" : "";
@@ -640,6 +679,46 @@ function renderLiveSidecar(sc, mode) {
   }
 }
 
+const simplifyLabel = (scope) =>
+  scope === "whole" ? "Plain English \u00b7 gr. 8 \u00b7 whole answer"
+                    : "Plain English \u00b7 gr. 8 \u00b7 bottom line";
+
+function appendSimplified(scope, text) {
+  const turn = el("div", "turn simplify-turn");
+  const asst = el("div", "turn-asst");
+  asst.innerHTML = `<div class="who2">Assistant</div>` +
+    `<div class="bubble asst simplify-bubble"><div class="bl-label">${simplifyLabel(scope)}` +
+    ` \u00b7 plain-language view \u00b7 never used as context</div>` +
+    `<div class="simplify-body">${renderMarkdown(text)}</div></div>`;
+  turn.appendChild(asst);
+  $("chat").appendChild(turn);
+  $("chat").scrollTop = $("chat").scrollHeight;
+  return turn;
+}
+
+async function doSimplify(scope, text, btn) {
+  if (!text || !text.trim()) { composerNotice("Nothing to simplify for this part."); return; }
+  const prev = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "simplifying\u2026";
+  const ph = appendSimplified(scope, "\u2026");
+  const body = ph.querySelector(".simplify-bubble");
+  try {
+    const r = await api("/api/simplify",
+      { method: "POST", body: { text, whole: scope === "whole" } });
+    body.innerHTML = `<div class="bl-label">${simplifyLabel(scope)}` +
+      ` \u00b7 plain-language view \u00b7 never used as context</div>` +
+      `<div class="simplify-body">${renderMarkdown(r.simplified || "(the model returned nothing)")}</div>`;
+    attachCiteHandlers(ph);
+  } catch (e) {
+    body.innerHTML = `<div class="bl-label">${simplifyLabel(scope)}</div>` +
+      `<div class="muted">Simplify failed: ${esc(String(e))}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = prev;
+  }
+}
+
 function renderTurn(res, rawText) {
   citationMap = new Map();
   (res.sidecar.citations || []).forEach((c) => citationMap.set(c.chunk_id, c));
@@ -660,6 +739,7 @@ function renderTurn(res, rawText) {
     renderBottomLine(res.sidecar.bottom_line) +
     renderReply(res.chat_reply) +
     renderDialectic(res.sidecar.dialectic) +
+    renderPresuppositionAudit(res.sidecar.presupposition_audit) +
     `</div>`;
   if (critical.length) asst.appendChild(renderAlerts(critical));
   const usage = el("div", "muted",
@@ -669,6 +749,16 @@ function renderTurn(res, rawText) {
     (res.sidecar.tier_reported === false ? " · tier defaulted by the engine" : ""));
   usage.style.marginTop = "6px";
   asst.appendChild(usage);
+
+  const bar = el("div", "simplify-bar");
+  const bBl = el("button", "ghost simplify-btn", "Aa\u2192 Plain English: bottom line (gr. 8)");
+  const bAll = el("button", "ghost simplify-btn", "Aa\u2192 Plain English: whole answer (gr. 8)");
+  bBl.onclick = () => doSimplify("bottom", res.sidecar.bottom_line || "", bBl);
+  bAll.onclick = () => doSimplify("whole", res.chat_reply || "", bAll);
+  bar.appendChild(bBl);
+  bar.appendChild(bAll);
+  asst.appendChild(bar);
+
   turn.appendChild(asst);
 
   const scToggle = el("button", "ghost sidecar-toggle", "\u{1f50d} Epistemic sidecar");

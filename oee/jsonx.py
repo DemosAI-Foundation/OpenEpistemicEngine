@@ -26,6 +26,9 @@ def extract_json(text: str):
                 return obj
         except json.JSONDecodeError:
             pass
+    salv = _salvage_truncated(text)
+    if salv is not None:
+        return salv
     for opener, closer in (("{", "}"), ("[", "]")):
         start = min(
             [i for i in (text.find(opener), text.find(opener)) if i >= 0] or [-1]
@@ -58,6 +61,84 @@ def extract_json(text: str):
                     except json.JSONDecodeError:
                         break
     raise ValueError("no JSON object found in model output")
+
+
+def _close_partial(prefix: str, strip_key: bool) -> str:
+    """Close an unterminated JSON fragment: finish an open string, optionally
+    drop a dangling key awaiting a value, then close every open bracket."""
+    stack = []
+    in_str = False
+    esc = False
+    for ch in prefix:
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch in "{[":
+            stack.append(ch)
+        elif ch in "}]":
+            if stack:
+                stack.pop()
+    out = prefix + '"' if in_str else prefix.rstrip()
+    out = re.sub(r'[,:]\s*$', "", out)
+    if strip_key:
+        out = re.sub(r',?\s*"[^"\\]*"\s*$', "", out).rstrip()
+        out = re.sub(r'[,:]\s*$', "", out)
+    for b in reversed(stack):
+        out += "}" if b == "{" else "]"
+    return out
+
+
+def _salvage_truncated(text: str):
+    """Recover the fields that completed before an output cut (max_tokens). The
+    generation order places chat_reply early, so a truncation during the late
+    fields (dialectic, bottom_line) must not discard the whole analysis."""
+    start = text.find("{")
+    if start < 0:
+        return None
+    s = text[start:]
+    depth = 0
+    in_str = False
+    esc = False
+    cuts = set()
+    for i, ch in enumerate(s):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch in "{[":
+            depth += 1
+        elif ch in "}]":
+            depth -= 1
+            if depth == 0:
+                return None  # already balanced: not our case
+            if depth == 1:
+                cuts.add(i + 1)
+        elif ch == "," and depth == 1:
+            cuts.add(i)
+    ordered = [len(s)] + sorted(cuts, reverse=True)[:400]
+    for cut in ordered:
+        for strip_key in (False, True):
+            repaired = _close_partial(s[:cut], strip_key)
+            try:
+                obj = json.loads(repaired)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict) and obj:
+                return obj
+    return None
 
 
 def validate(obj, schema: dict) -> list[str]:
@@ -286,6 +367,7 @@ DIALECTIC_MARKERS = {
 def normalise_dialectic(value, notes: list[str]) -> dict:
     """Models emit the dialectic as prose, a list, or with drifted keys."""
     if isinstance(value, dict):
+        value.setdefault("warrant", "")
         return value
     if isinstance(value, str):
         text = value.strip()
@@ -298,7 +380,7 @@ def normalise_dialectic(value, notes: list[str]) -> dict:
                 spans.append((m.start(), m.end(), key))
         if not spans:
             notes.append("dialectic: prose carried no thesis/antithesis/synthesis markers")
-            return {"thesis": text, "antithesis": "", "synthesis": ""}
+            return {"thesis": text, "antithesis": "", "synthesis": "", "warrant": ""}
         spans.sort()
         out = {}
         for i, (_start, end, key) in enumerate(spans):
@@ -306,6 +388,7 @@ def normalise_dialectic(value, notes: list[str]) -> dict:
             out[key] = text[end:stop].strip(" .;\n")
         for key in DIALECTIC_MARKERS:
             out.setdefault(key, "")
+        out.setdefault("warrant", "")
         notes.append("dialectic: split prose into thesis/antithesis/synthesis")
         return out
     if isinstance(value, list):
@@ -318,6 +401,7 @@ def normalise_dialectic(value, notes: list[str]) -> dict:
                 out[keys[i]] = str(item).strip()
         for key in keys:
             out.setdefault(key, "")
+        out.setdefault("warrant", "")
         notes.append(f"dialectic: positional list mapped to {keys}")
         return out
     notes.append(f"dialectic: unusable type {type(value).__name__}")
@@ -338,6 +422,13 @@ ROW_KEYS = {
     "claim_typology": (
         {"claim": ("claim", "statement", "text", "assertion"),
          "type": ("type", "kind", "classification", "claim_type")},
+    ),
+    "presupposition_audit": (
+        {"presupposition": ("presupposition", "premise", "hidden_claim", "hidden_premise",
+                            "assumption", "assumed_claim"),
+         "verdict": ("verdict", "assessment", "status", "classification", "finding"),
+         "counterfactual": ("counterfactual", "counter_factual", "if_false", "impact",
+                            "consequence", "synthesis_shift")},
     ),
 }
 
